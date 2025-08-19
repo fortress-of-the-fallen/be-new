@@ -7,6 +7,7 @@ import { FileServiceModule } from './file-service.ts/file-service.module';
 import { MailServiceModule } from './mail-service/mail-service.module';
 import { DataAccessModule } from './data-access/data-access.module';
 import { BackgroundHandlerModule } from './background-handler/background-handler.module';
+import { BroadcastModule } from './broadcast-handler/broadcast.module';
 
 const dependencies = [
    DataAccessModule,
@@ -17,6 +18,7 @@ const dependencies = [
    FileServiceModule,
    MailServiceModule,
    BackgroundHandlerModule,
+   BroadcastModule,
 ];
 
 @Module({

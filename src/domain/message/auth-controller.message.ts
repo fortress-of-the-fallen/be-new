@@ -8,6 +8,7 @@ export class AuthControllerMessage {
       USER_NOT_FOUND: 'Auth.Login.UserNotFound',
       INVALID_CREDENTIALS: 'Auth.Login.InvalidCredentials',
       MAX_SESSION_REACHED: 'Auth.Login.MaxSessionReached',
+      CLIENT_NOT_CONNECTED: 'Auth.Login.ClientNotConnected',
    };
 
    static readonly Logout = {

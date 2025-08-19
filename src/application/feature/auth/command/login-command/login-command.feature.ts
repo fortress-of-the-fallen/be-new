@@ -15,6 +15,10 @@ import { RequestHandler } from 'src/domain/decorator/request-handler.decorator';
 import { IMailService } from 'src/application/interface/mail-service/i-mail-service';
 import { ConfigKeyConstant } from 'src/domain/constant/configkey.constant';
 import { NodeEnv } from 'src/domain/enum/node_env';
+import { IBroadcastHandler } from 'src/application/interface/broadcast-handler/i-broadcast-handler';
+import { BroadcastMessage } from 'src/application/dto/broadcast-message.dto';
+import { LoginCommandBroadcastMessage } from './login-command-broadcast-message.dto';
+import { BroadcastAction } from 'src/domain/constant/BroadcastAction';
 
 export class LoginCommand implements IRequest<[string, string]> {
    constructor(public readonly loginReqDto: LoginReqDto) {}
@@ -37,9 +41,19 @@ export class LoginCommandHandler implements IRequestHandler<LoginCommand, [strin
 
       @Inject(IMailService)
       private readonly mailService: IMailService,
+
+      @Inject(IBroadcastHandler)
+      private readonly broadcastHandler: IBroadcastHandler,
    ) {}
+
+   private broadcastRoute = '/login';
+
    async handle(data: LoginCommand): Promise<[string, string]> {
       const { loginReqDto } = data;
+
+      if (!this.broadcastHandler.isClientConnected(loginReqDto.connectionId, this.broadcastRoute)) {
+         return [AuthControllerMessage.Login.CLIENT_NOT_CONNECTED, ''];
+      }
 
       const userRepository = this.unitOfWork.getRepository<User>(User.name);
       const user = await userRepository.single({ username: loginReqDto.username });
@@ -70,6 +84,14 @@ export class LoginCommandHandler implements IRequestHandler<LoginCommand, [strin
 
       await sessionRepository.add(session);
       await this.unitOfWork.saveChanges();
+
+      await this.broadcastHandler.sendMessageAsync(
+         loginReqDto.connectionId,
+         new BroadcastMessage<LoginCommandBroadcastMessage>(BroadcastAction.Login.Success, {
+            sessionId,
+         }),
+         this.broadcastRoute,
+      );
 
       return ['', sessionId];
    }

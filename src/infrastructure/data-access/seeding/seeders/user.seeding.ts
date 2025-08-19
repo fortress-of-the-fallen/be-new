@@ -24,6 +24,7 @@ export class UserSeeding {
             username: 'admin',
             password: HashHelper.hashString(ConfigKeyConstant.AppAdminPassword),
             role: [RoleBase.Admin],
+            maxSession: -1,
          });
 
          await this.unitOfWork.saveChanges();

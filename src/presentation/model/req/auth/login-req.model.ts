@@ -27,4 +27,13 @@ export class LoginReq {
       required: false,
    })
    rememberMe?: boolean;
+
+   @IsNotEmpty()
+   @AutoMap()
+   @ApiProperty({
+      example: 'sEnpxxIeymn-KuvBAAAB',
+      required: true,
+   })
+   @IsString()
+   connectionId: string;
 }

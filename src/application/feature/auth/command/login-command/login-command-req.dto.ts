@@ -9,4 +9,7 @@ export class LoginReqDto {
 
    @AutoMap()
    rememberMe?: boolean;
+
+   @AutoMap()
+   connectionId: string;
 }
