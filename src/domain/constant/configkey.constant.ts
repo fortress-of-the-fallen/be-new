@@ -14,7 +14,7 @@ class ConfigKeyConstant {
 
       return env;
    })();
-   static readonly SwaggerDescriptionPath: string = 'assets/html/swagger-description.md';
+   static readonly SwaggerDescriptionPath: string = 'assets/md/swagger-description.md';
    static readonly ServerPort: number = Number(config.server.port) || 3000;
    static readonly AppAdminPassword: string = config.app.adminPassword || 'admin123';
    static readonly AppMasterPassword: string = config.app.masterPassword || 'admin123';
