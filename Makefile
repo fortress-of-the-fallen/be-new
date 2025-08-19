@@ -15,8 +15,8 @@ run:
 	@npx dotenv -e .env -- npm run start:debug
 
 up:
-	@docker-compose -f docker/docker-compose.yaml --env-file docker/.env -p fotff up -d
+	@docker-compose -f docker/docker-compose.yaml --env-file docker/.env.local -p fotff up -d
 
 down:
-	@docker-compose -f docker/docker-compose.yaml --env-file docker/.env -p fotff down
+	@docker-compose -f docker/docker-compose.yaml --env-file docker/.env.local -p fotff down
 
