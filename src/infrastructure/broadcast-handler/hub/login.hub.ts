@@ -8,11 +8,5 @@ export class LoginHub extends BaseHub {
 
    constructor() {
       super();
-
-      this.register('sample', this.sampleHandler);
    }
-
-   sampleHandler = (socket: Socket, data?: any, ack?: (res: any) => void) => {
-      if (ack) ack({ ok: true, user: data });
-   };
 }
