@@ -70,12 +70,12 @@ export class AuthController {
    @Post('login')
    @ApiOperation({ summary: 'Login user' })
    @ApiOkResponse({
-      type: ResultRes<string>,
+      type: ExecutionRes,
       description: 'Returns execution result',
    })
    @RateLimit({ limit: 5, ttl: 60 })
-   async login(@Body() req: LoginReq): Promise<ResultRes<string>> {
-      const response: ResultRes<string> = new ResultRes<string>();
+   async login(@Body() req: LoginReq): Promise<ExecutionRes> {
+      const response: ExecutionRes = new ExecutionRes();
 
       const [error, result]: [string, string] = await this.mediator.send(
          new LoginCommand(this.mapper.map(req, LoginReq, LoginReqDto)),
@@ -87,7 +87,6 @@ export class AuthController {
          return response;
       }
 
-      response.result = result;
       return response;
    }
 
