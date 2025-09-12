@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+TOKEN_FILE="$HOME/.docker_token"
+IMAGE_NAME="trkhang4444/fotf"
+IMAGE_TAG="1.0.0-be_staging"
+DOCKER_CONFIG_TMP="/tmp/docker-config"
+
+mkdir -p "$DOCKER_CONFIG_TMP"
+
+# Get Docker token
+if [ -f "$TOKEN_FILE" ]; then
+    read -p "A Docker token already exists locally. Use the existing token? (y/n): " USE_OLD
+    if [ "$USE_OLD" = "y" ]; then
+        DOCKER_TOKEN=$(cat "$TOKEN_FILE")
+    else
+        read -sp "Enter your Docker token: " DOCKER_TOKEN
+        echo ""
+        echo "$DOCKER_TOKEN" > "$TOKEN_FILE"
+        chmod 600 "$TOKEN_FILE"
+    fi
+else
+    read -sp "Enter your Docker token: " DOCKER_TOKEN
+    echo ""
+    echo "$DOCKER_TOKEN" > "$TOKEN_FILE"
+    chmod 600 "$TOKEN_FILE"
+fi
+
+if [ -z "$DOCKER_TOKEN" ]; then
+    echo "Error: Docker token is empty. Exiting."
+    exit 1
+fi
+
+# Build image
+sudo docker build -t "$IMAGE_NAME:$IMAGE_TAG" .
+
+AUTH=$(echo -n "trkhang4444:$DOCKER_TOKEN" | base64)
+cat > "$DOCKER_CONFIG_TMP/config.json" <<EOF
+{
+  "auths": {
+    "https://index.docker.io/v1/": {
+      "auth": "$AUTH"
+    }
+  }
+}
+EOF
+
+
+# Push image
+sudo docker --config "$DOCKER_CONFIG_TMP" push "$IMAGE_NAME:$IMAGE_TAG"
+
+# Cleanup
+rm -rf "$DOCKER_CONFIG_TMP"

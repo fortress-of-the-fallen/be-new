@@ -1,0 +1,25 @@
+# ================================================
+# Stage 1: Builder
+FROM node:20.19.5-bullseye-slim AS builder
+
+WORKDIR /usr/src/app
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+# ================================================
+# Stage 2: Production
+FROM node:20.19.5-bullseye-slim
+
+WORKDIR /usr/src/app
+COPY package*.json ./
+
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/assets ./assets
+
+CMD ["node", "dist/main"]
