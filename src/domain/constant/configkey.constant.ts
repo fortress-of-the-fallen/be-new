@@ -36,7 +36,7 @@ class ConfigKeyConstant {
       Password: config.redis.password || '',
       ConnectTimeout: Number(config.redis.connectTimeout) || 1000,
    };
-   
+
    static readonly Minio = {
       Bucket: config.minio.bucket || 'Bucket',
       Url: config.minio.url || 'http://localhost:9000',
