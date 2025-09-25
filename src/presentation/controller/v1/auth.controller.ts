@@ -74,8 +74,8 @@ export class AuthController {
       description: 'Returns execution result',
    })
    @RateLimit({ limit: 5, ttl: 60 })
-   async login(@Body() req: LoginReq): Promise<ExecutionRes> {
-      const response: ExecutionRes = new ExecutionRes();
+   async login(@Body() req: LoginReq): Promise<ResultRes<string>> {
+      const response: ResultRes<string> = new ResultRes<string>();
 
       const [error, result]: [string, string] = await this.mediator.send(
          new LoginCommand(this.mapper.map(req, LoginReq, LoginReqDto)),
@@ -87,6 +87,7 @@ export class AuthController {
          return response;
       }
 
+      response.result = result;
       return response;
    }
 

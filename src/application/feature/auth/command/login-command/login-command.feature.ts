@@ -51,10 +51,6 @@ export class LoginCommandHandler implements IRequestHandler<LoginCommand, [strin
    async handle(data: LoginCommand): Promise<[string, string]> {
       const { loginReqDto } = data;
 
-      if (!this.broadcastHandler.isClientConnected(loginReqDto.connectionId, this.broadcastRoute)) {
-         return [AuthControllerMessage.Login.CLIENT_NOT_CONNECTED, ''];
-      }
-
       const userRepository = this.unitOfWork.getRepository<User>(User.name);
       const user = await userRepository.single({ username: loginReqDto.username });
       if (!user) {
@@ -84,14 +80,6 @@ export class LoginCommandHandler implements IRequestHandler<LoginCommand, [strin
 
       await sessionRepository.add(session);
       await this.unitOfWork.saveChanges();
-
-      await this.broadcastHandler.sendMessageAsync(
-         loginReqDto.connectionId,
-         new BroadcastMessage<LoginCommandBroadcastMessage>(BroadcastAction.Login.Success, {
-            sessionId,
-         }),
-         this.broadcastRoute,
-      );
 
       return ['', sessionId];
    }
