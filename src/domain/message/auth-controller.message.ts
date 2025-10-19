@@ -2,6 +2,7 @@ export class AuthControllerMessage {
    static readonly Register = {
       PASSWORD_MISMATCH: 'Auth.Register.PasswordMismatch',
       USERNAME_EXISTS: 'Auth.Register.UsernameExists',
+      EMAIL_EXISTS: 'Auth.Register.EmailExists',
    };
 
    static readonly Login = {

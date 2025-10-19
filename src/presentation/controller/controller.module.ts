@@ -6,6 +6,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { controllers } from 'src/domain/decorator/controller.decorator';
 
+// Import command handler to ensure it's registered
+import 'src/application/feature/game-user/command/create-game-user-command/create-game-user-command.feature';
+
 const controllerDir = path.resolve(__dirname, './v1');
 
 fs.readdirSync(controllerDir)
@@ -31,4 +34,4 @@ fs.readdirSync(controllerDir)
       }),
    ],
 })
-export class ControllerModule {}
+export class ControllerModule { }

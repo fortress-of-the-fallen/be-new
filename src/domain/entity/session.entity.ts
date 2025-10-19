@@ -27,12 +27,6 @@ export class Session extends IBaseEntity {
    @Prop({ required: true, default: () => false })
    isRevoked: boolean;
 
-   @Prop({ required: true })
-   userAgent: string;
-
-   @Prop({ required: true })
-   ipAddress: string;
-
    constructor(props: Partial<Session>) {
       super();
       Object.assign(this, props);

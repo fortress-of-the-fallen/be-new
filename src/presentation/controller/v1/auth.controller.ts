@@ -9,6 +9,8 @@ import { RegisterReqDto } from 'src/application/feature/auth/command/register-co
 import { RegisterCommand } from 'src/application/feature/auth/command/register-command/register-command.feature';
 import { ILogger } from 'src/application/interface/logger/i-logger';
 import { IMediator } from 'src/application/interface/mediator/i-mediator';
+import { ApiErrorMessage, ApiErrorMessages } from 'src/domain/decorator/api-error-message.decorator';
+import { AuthControllerMessage } from 'src/domain/message/auth-controller.message';
 import { Controllers } from 'src/domain/decorator/controller.decorator';
 import { RateLimit } from 'src/domain/decorator/rate-limit.decorator';
 import { Roles } from 'src/domain/decorator/role.decorator';
@@ -31,12 +33,13 @@ export class AuthController {
 
       @InjectMapper()
       private readonly mapper: Mapper,
-   ) {}
+   ) { }
 
    @Get('github-login')
    @ApiOperation({ summary: 'Github login' })
    @RateLimit({ limit: 5, ttl: 60 })
-   @ApiResponse({ status: 400.1, description: 'Returns the sample list' })
+   @ApiResponse({ status: 400, description: 'Error: Auth.Login.UserNotFound' })
+   @ApiErrorMessages(AuthControllerMessage.Login)
    async getSamples(): Promise<string> {
       // const response: ExecutionRes = new ExecutionRes(); // Changed to English: // const response: ExecutionRes = new ExecutionRes();
 
@@ -46,6 +49,7 @@ export class AuthController {
    @Post('register')
    @ApiOperation({ summary: 'Register user' })
    @RateLimit({ limit: 5, ttl: 60 })
+   @ApiErrorMessages(AuthControllerMessage.Register)
    @ApiOkResponse({
       type: ResultRes<string>,
       description: 'Returns execution result',
@@ -70,9 +74,10 @@ export class AuthController {
    @Post('login')
    @ApiOperation({ summary: 'Login user' })
    @ApiOkResponse({
-      type: ExecutionRes,
+      type: ResultRes<string>,
       description: 'Returns execution result',
    })
+   @ApiErrorMessages(AuthControllerMessage.Login)
    @RateLimit({ limit: 5, ttl: 60 })
    async login(@Body() req: LoginReq): Promise<ResultRes<string>> {
       const response: ResultRes<string> = new ResultRes<string>();

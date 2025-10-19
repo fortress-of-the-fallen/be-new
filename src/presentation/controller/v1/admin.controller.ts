@@ -2,6 +2,8 @@ import { Body, Inject, Post, UseInterceptors } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CreateUserCommand } from 'src/application/feature/admin/command/create-user-command/create-user-command.feauter';
+import { ApiErrorMessages } from 'src/domain/decorator/api-error-message.decorator';
+import { AdminControllerMessages } from 'src/domain/message/admin-controller.message';
 import { IMediator } from 'src/application/interface/mediator/i-mediator';
 import { Controllers } from 'src/domain/decorator/controller.decorator';
 import { Roles } from 'src/domain/decorator/role.decorator';
@@ -16,13 +18,14 @@ export class AdminController {
    constructor(
       @Inject(IMediator)
       private readonly mediator: IMediator,
-   ) {}
+   ) { }
 
    @Post('/account')
    @ApiOkResponse({
       type: ExecutionRes,
       description: 'Returns execution result',
    })
+   @ApiErrorMessages(AdminControllerMessages.CreateUser)
    @UseInterceptors(AnyFilesInterceptor())
    @ApiConsumes('multipart/form-data')
    @Roles(RoleBase.Admin)

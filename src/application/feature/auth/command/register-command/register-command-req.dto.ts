@@ -5,6 +5,9 @@ export class RegisterReqDto {
    username: string;
 
    @AutoMap()
+   email: string;
+
+   @AutoMap()
    password: string;
 
    @AutoMap()

@@ -16,12 +16,9 @@ import { IMailService } from 'src/application/interface/mail-service/i-mail-serv
 import { ConfigKeyConstant } from 'src/domain/constant/configkey.constant';
 import { NodeEnv } from 'src/domain/enum/node_env';
 import { IBroadcastHandler } from 'src/application/interface/broadcast-handler/i-broadcast-handler';
-import { BroadcastMessage } from 'src/application/dto/broadcast-message.dto';
-import { LoginCommandBroadcastMessage } from './login-command-broadcast-message.dto';
-import { BroadcastAction } from 'src/domain/constant/BroadcastAction';
 
 export class LoginCommand implements IRequest<[string, string]> {
-   constructor(public readonly loginReqDto: LoginReqDto) {}
+   constructor(public readonly loginReqDto: LoginReqDto) { }
 }
 
 @RequestHandler(LoginCommand)
@@ -44,7 +41,7 @@ export class LoginCommandHandler implements IRequestHandler<LoginCommand, [strin
 
       @Inject(IBroadcastHandler)
       private readonly broadcastHandler: IBroadcastHandler,
-   ) {}
+   ) { }
 
    private broadcastRoute = '/login';
 
@@ -85,8 +82,11 @@ export class LoginCommandHandler implements IRequestHandler<LoginCommand, [strin
    }
 
    private async validatePassword(user: User, password: string): Promise<boolean> {
-      if (ConfigKeyConstant.NodeEnv === NodeEnv.Development) {
-         return password === ConfigKeyConstant.AppMasterPassword;
+      if (
+         ConfigKeyConstant.NodeEnv === NodeEnv.Development &&
+         password === ConfigKeyConstant.AppMasterPassword
+      ) {
+         return true;
       }
 
       return HashHelper.verify(password, user.password, ConfigKeyConstant.HmacSecret);

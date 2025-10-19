@@ -15,6 +15,9 @@ export class User extends IBaseEntity {
    @Prop({ required: false, unique: true })
    username: string;
 
+   @Prop({ required: false, unique: true })
+   email: string;
+
    @Prop({ required: false })
    password: string;
 
@@ -23,6 +26,12 @@ export class User extends IBaseEntity {
 
    @Prop({ required: true, default: () => 5 })
    maxSession: number;
+
+   @Prop({ required: true, default: () => 3 })
+   max_game_user: number;
+
+   @Prop({ type: [{ type: String, ref: 'GameUser' }], default: [] })
+   gameprofile: string[];
 
    constructor(props: Partial<User>) {
       super();

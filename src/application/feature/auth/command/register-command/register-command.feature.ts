@@ -14,7 +14,7 @@ import { IRequest, IRequestHandler } from 'src/application/interface/mediator/i-
 import { RequestHandler } from 'src/domain/decorator/request-handler.decorator';
 
 export class RegisterCommand implements IRequest<[string, string]> {
-   constructor(public readonly reqDto: RegisterReqDto) {}
+   constructor(public readonly reqDto: RegisterReqDto) { }
 }
 
 @RequestHandler(RegisterCommand)
@@ -25,10 +25,7 @@ export class RegisterCommandHandler implements IRequestHandler<RegisterCommand, 
 
       @Inject(IBaseWriteUnitOfWork)
       private readonly unitOfWork: IBaseWriteUnitOfWork,
-
-      @Inject(IHttpContextAccessor)
-      private readonly httpContextAccessor: IHttpContextAccessor,
-   ) {}
+   ) { }
    async handle(data: RegisterCommand): Promise<[string, string]> {
       const { reqDto } = data;
 
@@ -41,8 +38,10 @@ export class RegisterCommandHandler implements IRequestHandler<RegisterCommand, 
          return [AuthControllerMessage.Register.USERNAME_EXISTS, ''];
       }
 
-      const httpContext = this.httpContextAccessor.get<ExpressRequest>();
-      this.logger.debug(JSON.stringify(httpContext?.headers));
+      // Kiểm tra email đã tồn tại
+      if (await userRepository.any({ email: reqDto.email })) {
+         return [AuthControllerMessage.Register.EMAIL_EXISTS, ''];
+      }
 
       const sessionRepository = this.unitOfWork.getRepository<Session>(Session.name);
 
@@ -52,6 +51,7 @@ export class RegisterCommandHandler implements IRequestHandler<RegisterCommand, 
       await userRepository.add({
          _id: userId,
          username: reqDto.username,
+         email: reqDto.email,
          password: HashHelper.hashString(reqDto.password),
          role: [RoleBase.User],
       });
@@ -59,8 +59,6 @@ export class RegisterCommandHandler implements IRequestHandler<RegisterCommand, 
       await sessionRepository.add({
          _id: sessionId,
          user: userId,
-         userAgent: httpContext?.headers['user-agent'] || '',
-         ipAddress: (httpContext as any).ip || (httpContext?.headers['x-forwarded-for'] as string),
          expiresAt: new Date(Date.now() + sessionExpiresIn * 1000),
       });
 
