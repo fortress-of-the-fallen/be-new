@@ -8,44 +8,44 @@ import { IRequest, IRequestHandler } from 'src/application/interface/mediator/i-
 import { RequestHandler } from 'src/domain/decorator/request-handler.decorator';
 import { Request as ExpressRequest } from 'express';
 
-export class ListGameUserCommand implements IRequest<[string, GameUser[]]> { }
+export class ListGameUserCommand implements IRequest<[string, GameUser[]]> {}
 
 @RequestHandler(ListGameUserCommand)
-export class ListGameUserCommandHandler implements IRequestHandler<ListGameUserCommand, [string, GameUser[]]> {
-    constructor(
-        @Inject(IBaseWriteUnitOfWork)
-        private readonly unitOfWork: IBaseWriteUnitOfWork,
+export class ListGameUserCommandHandler
+   implements IRequestHandler<ListGameUserCommand, [string, GameUser[]]>
+{
+   constructor(
+      @Inject(IBaseWriteUnitOfWork)
+      private readonly unitOfWork: IBaseWriteUnitOfWork,
 
-        @Inject(IHttpContextAccessor)
-        private readonly httpContextAccessor: IHttpContextAccessor,
-    ) { }
+      @Inject(IHttpContextAccessor)
+      private readonly httpContextAccessor: IHttpContextAccessor,
+   ) {}
 
-    async handle(data: ListGameUserCommand): Promise<[string, GameUser[]]> {
-        const httpContext = this.httpContextAccessor.get<ExpressRequest>();
-        const sessionId = httpContext?.headers['session-id'] as string;
+   async handle(data: ListGameUserCommand): Promise<[string, GameUser[]]> {
+      const httpContext = this.httpContextAccessor.get<ExpressRequest>();
+      const sessionId = httpContext?.headers['session-id'] as string;
 
-        if (!sessionId) {
-            return [GameUserControllerMessage.List.USER_NOT_FOUND, []];
-        }
+      if (!sessionId) {
+         return [GameUserControllerMessage.List.USER_NOT_FOUND, []];
+      }
 
-        const sessionRepository = this.unitOfWork.getRepository<Session>(Session.name);
-        const sessions = await sessionRepository
-            .queryCondition({ _id: sessionId })
-            .join('user')
-            .exec();
+      const sessionRepository = this.unitOfWork.getRepository<Session>(Session.name);
+      const sessions = await sessionRepository
+         .queryCondition({ _id: sessionId })
+         .join('user')
+         .exec();
 
-        const session = sessions[0];
-        if (!session) {
-            return [GameUserControllerMessage.List.USER_NOT_FOUND, []];
-        }
+      const session = sessions[0];
+      if (!session) {
+         return [GameUserControllerMessage.List.USER_NOT_FOUND, []];
+      }
 
-        const userId = typeof session.user === 'string' ? session.user : (session.user as any)._id;
+      const userId = typeof session.user === 'string' ? session.user : (session.user as any)._id;
 
-        const gameUserRepository = this.unitOfWork.getRepository<GameUser>(GameUser.name);
-        const gameUsers = await gameUserRepository
-            .queryCondition({ userId: userId })
-            .exec();
+      const gameUserRepository = this.unitOfWork.getRepository<GameUser>(GameUser.name);
+      const gameUsers = await gameUserRepository.queryCondition({ userId: userId }).exec();
 
-        return ['', gameUsers];
-    }
+      return ['', gameUsers];
+   }
 }

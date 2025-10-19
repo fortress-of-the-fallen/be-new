@@ -34,4 +34,4 @@ fs.readdirSync(controllerDir)
       }),
    ],
 })
-export class ControllerModule { }
+export class ControllerModule {}

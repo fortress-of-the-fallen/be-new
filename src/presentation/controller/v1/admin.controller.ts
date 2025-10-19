@@ -18,7 +18,7 @@ export class AdminController {
    constructor(
       @Inject(IMediator)
       private readonly mediator: IMediator,
-   ) { }
+   ) {}
 
    @Post('/account')
    @ApiOkResponse({

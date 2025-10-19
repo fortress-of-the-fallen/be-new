@@ -25,7 +25,7 @@ export class GameUserController {
 
       @Inject(IMediator)
       private readonly mediator: IMediator,
-   ) { }
+   ) {}
 
    @Post()
    @ApiOperation({ summary: 'Create game user character' })
@@ -69,9 +69,7 @@ export class GameUserController {
    async listGameUsers(): Promise<ResultRes<GameUserRes[]>> {
       const response: ResultRes<GameUserRes[]> = new ResultRes<GameUserRes[]>();
 
-      const [error, result]: [string, any[]] = await this.mediator.send(
-         new ListGameUserCommand(),
-      );
+      const [error, result]: [string, any[]] = await this.mediator.send(new ListGameUserCommand());
 
       if (!isNullOrEmpty(error)) {
          response.success = false;

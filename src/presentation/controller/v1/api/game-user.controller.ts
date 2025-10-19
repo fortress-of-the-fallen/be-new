@@ -28,7 +28,7 @@ export class GameUserController {
 
       @InjectMapper()
       private readonly mapper: Mapper,
-   ) { }
+   ) {}
 
    @Post()
    @ApiOperation({ summary: 'Create game user character' })

@@ -14,7 +14,7 @@ import { IRequest, IRequestHandler } from 'src/application/interface/mediator/i-
 import { RequestHandler } from 'src/domain/decorator/request-handler.decorator';
 
 export class RegisterCommand implements IRequest<[string, string]> {
-   constructor(public readonly reqDto: RegisterReqDto) { }
+   constructor(public readonly reqDto: RegisterReqDto) {}
 }
 
 @RequestHandler(RegisterCommand)
@@ -25,7 +25,7 @@ export class RegisterCommandHandler implements IRequestHandler<RegisterCommand, 
 
       @Inject(IBaseWriteUnitOfWork)
       private readonly unitOfWork: IBaseWriteUnitOfWork,
-   ) { }
+   ) {}
    async handle(data: RegisterCommand): Promise<[string, string]> {
       const { reqDto } = data;
 

@@ -7,32 +7,32 @@ import { Entity } from '../decorator/entity.decorator';
 
 @Entity()
 export class GameUser extends IBaseEntity {
-    @Prop({ type: String, required: true, default: () => IdentityHelper.generateUUID() })
-    declare _id: string;
+   @Prop({ type: String, required: true, default: () => IdentityHelper.generateUUID() })
+   declare _id: string;
 
-    @Prop({ required: true })
-    character_name: string;
+   @Prop({ required: true })
+   character_name: string;
 
-    @Prop({ type: String, enum: StarterRace, required: true })
-    race: StarterRace;
+   @Prop({ type: String, enum: StarterRace, required: true })
+   race: StarterRace;
 
-    @Prop({ type: String, enum: GenderEnum, required: true })
-    gender: GenderEnum;
+   @Prop({ type: String, enum: GenderEnum, required: true })
+   gender: GenderEnum;
 
-    @Prop({ type: Object, default: null })
-    character: any;
+   @Prop({ type: Object, default: null })
+   character: any;
 
-    @Prop({ type: Object, default: null })
-    inventory: any;
+   @Prop({ type: Object, default: null })
+   inventory: any;
 
-    @Prop({ type: Object, default: null })
-    equipments: any;
+   @Prop({ type: Object, default: null })
+   equipments: any;
 
-    @Prop({ type: String, ref: 'User', required: true })
-    userId: string;
+   @Prop({ type: String, ref: 'User', required: true })
+   userId: string;
 
-    constructor(props: Partial<GameUser>) {
-        super();
-        Object.assign(this, props);
-    }
+   constructor(props: Partial<GameUser>) {
+      super();
+      Object.assign(this, props);
+   }
 }

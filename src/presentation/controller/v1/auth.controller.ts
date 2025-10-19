@@ -9,7 +9,10 @@ import { RegisterReqDto } from 'src/application/feature/auth/command/register-co
 import { RegisterCommand } from 'src/application/feature/auth/command/register-command/register-command.feature';
 import { ILogger } from 'src/application/interface/logger/i-logger';
 import { IMediator } from 'src/application/interface/mediator/i-mediator';
-import { ApiErrorMessage, ApiErrorMessages } from 'src/domain/decorator/api-error-message.decorator';
+import {
+   ApiErrorMessage,
+   ApiErrorMessages,
+} from 'src/domain/decorator/api-error-message.decorator';
 import { AuthControllerMessage } from 'src/domain/message/auth-controller.message';
 import { Controllers } from 'src/domain/decorator/controller.decorator';
 import { RateLimit } from 'src/domain/decorator/rate-limit.decorator';
@@ -33,7 +36,7 @@ export class AuthController {
 
       @InjectMapper()
       private readonly mapper: Mapper,
-   ) { }
+   ) {}
 
    @Get('github-login')
    @ApiOperation({ summary: 'Github login' })
