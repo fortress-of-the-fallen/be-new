@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+if [ "$(uname -s | grep -i mingw)" ]; then
+  npm.cmd run lint
+else
+  npm run lint
+fi

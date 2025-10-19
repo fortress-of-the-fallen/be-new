@@ -1,0 +1,3 @@
+npm install
+npm install -g dotenv-cli
+npx husky install
