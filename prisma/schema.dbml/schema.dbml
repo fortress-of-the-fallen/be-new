@@ -39,6 +39,19 @@ Table characters {
   isDeleted Boolean [not null, default: false]
   isLocked Boolean [not null, default: false]
   user users [not null]
+  appearance character_appearances
+}
+
+Table character_appearances {
+  id String [pk]
+  characterId String [unique, not null]
+  hair String [not null]
+  beard String [not null]
+  eye String [not null]
+  hairColor String [not null]
+  beardColor String [not null]
+  eyeColor String [not null]
+  character characters [not null]
 }
 
 Table backups {
@@ -53,3 +66,5 @@ Table backups {
 Ref: sessions.user > users.id
 
 Ref: characters.userId > users.id
+
+Ref: character_appearances.characterId - characters.id

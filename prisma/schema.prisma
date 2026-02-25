@@ -59,9 +59,24 @@ model Character {
   isDeleted      Boolean  @default(false)
   isLocked       Boolean  @default(false)
   user           User     @relation(fields: [userId], references: [id])
+  appearance     CharacterAppearance?
 
   @@index([userId])
   @@map("characters")
+}
+
+model CharacterAppearance {
+  id         String    @id @default(uuid()) @map("_id")
+  characterId String   @unique
+  hair       String
+  beard      String
+  eye        String
+  hairColor  String
+  beardColor String
+  eyeColor   String
+  character  Character @relation(fields: [characterId], references: [id])
+
+  @@map("character_appearances")
 }
 
 model Backup {

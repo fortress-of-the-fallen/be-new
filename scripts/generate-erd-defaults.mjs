@@ -83,6 +83,7 @@ for (const line of lines) {
   const isOptional = rawType.endsWith('?');
   const type = mapType(rawType);
   const isId = /@id\b/.test(attrs);
+  const isUnique = /@unique\b/.test(attrs);
   const defaultValue = extractDefault(attrs);
 
   const relMatch = attrs.match(/@relation\(fields:\s*\[([^\]]+)\],\s*references:\s*\[([^\]]+)\]/);
@@ -100,6 +101,7 @@ for (const line of lines) {
     isList,
     isOptional,
     isId,
+    isUnique,
     defaultValue,
     rel,
   });
@@ -134,9 +136,15 @@ for (const model of models) {
     const target = modelByName.get(f.type);
     if (!target) continue;
 
-    // parent(one) to child(many)
+    // parent(one) to child(many/one)
     const left = f.isOptional ? 'o|' : '||';
-    mmd.push(`  "${target.dbName}" ${left}--o{ "${model.dbName}" : "${f.name}"`);
+    const fkUnique =
+      (f.rel.fields ?? []).length > 0 &&
+      (f.rel.fields ?? []).every(fieldName =>
+        model.fields.some(mf => mf.name === fieldName && mf.isUnique),
+      );
+    const right = fkUnique ? 'o|' : 'o{';
+    mmd.push(`  "${target.dbName}" ${left}--${right} "${model.dbName}" : "${f.name}"`);
   }
 }
 

@@ -1,6 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { StarterRace } from 'src/features/character/application/starter-race.enum';
 import { GenderEnum } from 'src/features/character/application/gender.enum';
+
+class CharacterAppearanceRes {
+   @ApiProperty({ example: 'appearance-id-123' })
+   _id: string;
+
+   @ApiProperty({ example: 'ShortWavy' })
+   hair: string;
+
+   @ApiProperty({ example: 'TrimGoatee' })
+   beard: string;
+
+   @ApiProperty({ example: 'RoundSharp' })
+   eye: string;
+
+   @ApiProperty({ example: '#4A2C1D' })
+   hairColor: string;
+
+   @ApiProperty({ example: '#2C1B12' })
+   beardColor: string;
+
+   @ApiProperty({ example: '#3A86FF' })
+   eyeColor: string;
+}
 
 export class CharacterRes {
    @ApiProperty({
@@ -16,11 +38,10 @@ export class CharacterRes {
    character_name: string;
 
    @ApiProperty({
-      enum: StarterRace,
-      example: StarterRace.Human,
+      example: 'human',
       description: 'Character race',
    })
-   race: StarterRace;
+   race: string;
 
    @ApiProperty({
       enum: GenderEnum,
@@ -34,4 +55,11 @@ export class CharacterRes {
       description: 'User ID (foreign key)',
    })
    userId: string;
+
+   @ApiProperty({
+      type: CharacterAppearanceRes,
+      nullable: true,
+      description: 'Character appearance details',
+   })
+   appearance?: CharacterAppearanceRes | null;
 }

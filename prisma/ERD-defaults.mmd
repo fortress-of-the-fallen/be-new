@@ -31,6 +31,16 @@ erDiagram
     Boolean isDeleted  "default: false"
     Boolean isLocked  "default: false"
   }
+  "character_appearances" {
+    String id PK "default: uuid()"
+    String characterId FK
+    String hair
+    String beard
+    String eye
+    String hairColor
+    String beardColor
+    String eyeColor
+  }
   "backups" {
     String id PK "default: uuid()"
     String backUpType
@@ -41,3 +51,4 @@ erDiagram
   }
   "users" ||--o{ "sessions" : "account"
   "users" ||--o{ "characters" : "user"
+  "characters" ||--o| "character_appearances" : "character"

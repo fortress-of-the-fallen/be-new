@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { StarterRace } from 'src/features/character/application/starter-race.enum';
 import { IdentityHelper } from 'src/shared/helper/identity.helper';
 import { CharacterControllerMessage } from 'src/features/character/application/character-controller.message';
 import { CreateCharacterDto } from './dto/create-character.dto';
@@ -48,15 +47,30 @@ export class CharacterApplicationService {
       }
 
       const characterId = IdentityHelper.generateUUID();
-      await this.prisma.character.create({
-         data: {
-            id: characterId,
-            character_name: reqDto.character_name,
-            race: StarterRace.Human,
-            gender: reqDto.gender,
-            userId,
-         },
-      });
+      const appearanceId = IdentityHelper.generateUUID();
+      await this.prisma.$transaction([
+         this.prisma.character.create({
+            data: {
+               id: characterId,
+               character_name: reqDto.character_name,
+               race: reqDto.race,
+               gender: reqDto.gender,
+               userId,
+            },
+         }),
+         this.prisma.characterAppearance.create({
+            data: {
+               id: appearanceId,
+               characterId,
+               hair: reqDto.hair,
+               beard: reqDto.beard,
+               eye: reqDto.eye,
+               hairColor: reqDto.hairColor,
+               beardColor: reqDto.beardColor,
+               eyeColor: reqDto.eyeColor,
+            },
+         }),
+      ]);
 
       return ['', characterId];
    }
@@ -72,6 +86,9 @@ export class CharacterApplicationService {
             userId,
             isDeleted: false,
             isLocked: false,
+         },
+         include: {
+            appearance: true,
          },
       });
 
