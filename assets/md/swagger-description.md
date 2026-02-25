@@ -3,7 +3,12 @@
 Welcome to API documentation. This document describes the available endpoints, request/response formats, and authentication methods.
 
 - ApiSpec: [link](/)
-- Swagger: [link](/swagger)
+- API Portal: [link](/)
+- Docs Auth: [link](/docs/auth)
+- Docs Character: [link](/docs/character)
+- Swagger All: [link](/swagger)
+- Swagger Auth: [link](/swagger/auth)
+- Swagger Character: [link](/swagger/character)
 - Env: [link](https://docs.google.com/spreadsheets/d/1gPHUbUbTPOIgvykkxbRK4BGK1JGbZBNVgmBMmJw6ItI/edit?usp=sharing)
 
 # Broadcast Routes
@@ -58,6 +63,16 @@ Welcome to API documentation. This document describes the available endpoints, r
 | Auth.Logout.SessionIdRequired    | The `session-id` header is required for logout               |
 | Auth.Logout.UserNotFound         | User account for the current session was not found           |
 | Auth.Logout.SessionNotFound      | The provided `session-id` does not match any active session  |
+
+## Character Error
+
+| ErrorCode                           | Description                                               |
+| ----------------------------------- | --------------------------------------------------------- |
+| Character.Create.CharacterNameExists| Character name already exists for current user            |
+| Character.Create.InvalidGender      | Gender value is invalid                                   |
+| Character.Create.UserNotFound       | User account for the current session was not found        |
+| Character.Create.MaxCharacterReached| Character slot limit has been reached for this user       |
+| Character.List.UserNotFound         | User account for the current session was not found        |
 
 # Conclusion
 

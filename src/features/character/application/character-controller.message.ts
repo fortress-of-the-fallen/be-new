@@ -9,4 +9,10 @@ export class CharacterControllerMessage {
    static readonly List = {
       USER_NOT_FOUND: 'Character.List.UserNotFound',
    };
+
+   static readonly Delete = {
+      CHARACTER_ID_REQUIRED: 'Character.Delete.CharacterIdRequired',
+      USER_NOT_FOUND: 'Character.Delete.UserNotFound',
+      CHARACTER_NOT_FOUND: 'Character.Delete.CharacterNotFound',
+   };
 }

@@ -1,5 +1,5 @@
-import { Body, Get, Headers, Post } from '@nestjs/common';
-import { ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Delete, Get, Headers, Param, Post } from '@nestjs/common';
+import { ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiErrorMessages } from 'src/shared/decorator/api-error-message.decorator';
 import { CharacterControllerMessage } from 'src/features/character/application/character-controller.message';
 import { Controllers } from 'src/shared/decorator/controller.decorator';
@@ -8,10 +8,11 @@ import { Roles } from 'src/shared/decorator/role.decorator';
 import { AllRoles } from 'src/features/auth/application/role-base.enum';
 import { isNullOrEmpty } from 'src/shared/helper/string.helper';
 import { CreateCharacterReq } from 'src/api/model/req/character/create-character-req.model';
+import { DeleteCharacterReq } from 'src/api/model/req/character/delete-character-req.model';
 import { CharacterRes } from 'src/api/model/res/character/character-res.model';
+import { ExecutionRes } from 'src/api/model/res/base/execution-res.model';
 import { ResultRes } from 'src/api/model/res/base/result-res.model';
-import { CharacterApplicationService } from 'src/features/character/application/character.application-service';
-import { CreateCharacterDto } from 'src/features/character/application/dto/create-character.dto';
+import { CharacterApplicationService, CreateCharacterDto } from 'src/features/character/application';
 
 @ApiTags('Character')
 @Controllers({ path: 'api/character', version: '1' })
@@ -81,6 +82,46 @@ export class CharacterController {
       }
 
       response.result = result;
+      return response;
+   }
+
+   @Delete(':characterId')
+   @ApiOperation({ summary: 'Delete character' })
+   @ApiHeader({
+      name: 'session-id',
+      description: 'Session ID for the user',
+      required: true,
+   })
+   @ApiParam({
+      name: 'characterId',
+      required: true,
+      description: 'Character ID to delete',
+   })
+   @ApiOkResponse({
+      type: ExecutionRes,
+      description: 'Returns execution result',
+   })
+   @ApiErrorMessages(CharacterControllerMessage.Delete)
+   @RateLimit({ limit: 5, ttl: 60 })
+   @Roles(...AllRoles)
+   async deleteCharacter(
+      @Param() req: DeleteCharacterReq,
+      @Headers('session-id') sessionId?: string,
+   ): Promise<ExecutionRes> {
+      const response: ExecutionRes = new ExecutionRes();
+
+      const error: string = await this.characterApplicationService.deleteCharacter(
+         req.characterId,
+         sessionId,
+      );
+
+      if (!isNullOrEmpty(error)) {
+         response.success = false;
+         response.errorCode = error;
+         return response;
+      }
+
+      response.success = true;
       return response;
    }
 }

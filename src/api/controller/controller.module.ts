@@ -8,24 +8,27 @@ import { controllers } from 'src/shared/decorator/controller.decorator';
 
 const controllerDir = path.resolve(__dirname, './v1');
 const srcControllerDir = path.resolve(process.cwd(), 'src/api/controller/v1');
+const isTsRuntime = __filename.endsWith('.ts');
+const targetExtension = isTsRuntime ? '.ts' : '.js';
 
 const sourceControllerFiles = fs.existsSync(srcControllerDir)
    ? new Set(
         fs
            .readdirSync(srcControllerDir)
-           .filter(file => file.endsWith('.ts') && !file.endsWith('.spec.ts'))
+           .filter(file => file.endsWith('.ts') && !file.endsWith('.spec.ts') && !file.endsWith('.d.ts'))
            .map(file => file.replace(/\.ts$/, '')),
      )
    : null;
 
 fs.readdirSync(controllerDir)
-   .filter(file => file.endsWith('.js'))
+   .filter(file => file.endsWith(targetExtension))
+   .filter(file => (isTsRuntime ? !file.endsWith('.spec.ts') && !file.endsWith('.d.ts') : true))
    .filter(file => {
       if (!sourceControllerFiles) {
          return true;
       }
 
-      const baseName = file.replace(/\.js$/, '');
+      const baseName = file.replace(targetExtension, '');
       return sourceControllerFiles.has(baseName);
    })
    .forEach(file => {
