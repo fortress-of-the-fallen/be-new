@@ -1,23 +1,18 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable, Logger, Scope } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { IMailService } from 'src/application/interface/mail-service/i-mail-service';
-import { ConfigKeyConstant } from 'src/domain/constant/configkey.constant';
+import { ConfigKeyConstant } from 'src/shared/constant/configkey.constant';
 import { GmailServiceConfig } from './gmail-service.config';
-import { ILogger } from 'src/application/interface/logger/i-logger';
 
 @Injectable({ scope: Scope.REQUEST })
-export class MailService implements IMailService {
+export class MailService {
    private transporter: nodemailer.Transporter;
+   private readonly logger = new Logger(MailService.name);
 
    constructor(
       @Inject(GmailServiceConfig)
       private readonly gmailServiceConfig: GmailServiceConfig,
-
-      @Inject(ILogger)
-      private readonly logger: ILogger,
    ) {
       this.transporter = this.gmailServiceConfig.getClient();
-      logger.setContext(MailService.name);
    }
 
    async sendMail(to: string, subject: string, html: string): Promise<void> {

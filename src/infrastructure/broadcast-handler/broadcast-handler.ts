@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Server } from 'socket.io';
-import { IBroadcastHandler } from 'src/application/interface/broadcast-handler/i-broadcast-handler';
 
 @Injectable()
-export class BroadcastHandler implements IBroadcastHandler {
+export class BroadcastHandler {
    private server: Server;
 
    setServer(server: Server) {

@@ -1,13 +1,12 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { hubs } from 'src/domain/decorator/hub.decorator';
-import { IBroadcastHandler } from 'src/application/interface/broadcast-handler/i-broadcast-handler';
-import { Inject } from '@nestjs/common';
+import { hubs } from 'src/shared/decorator/hub.decorator';
+import { BroadcastHandler } from './broadcast-handler';
 
 @WebSocketGateway()
 export class AppGateway {
    @WebSocketServer() server: Server;
-   constructor(@Inject(IBroadcastHandler) private broadcastHandler: IBroadcastHandler) {}
+   constructor(private readonly broadcastHandler: BroadcastHandler) {}
 
    afterInit(server: Server) {
       this.broadcastHandler.setServer(this.server);

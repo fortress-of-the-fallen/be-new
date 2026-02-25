@@ -1,13 +1,13 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { ConfigKeyConstant } from 'src/domain/constant/configkey.constant';
+import { Module } from '@nestjs/common';
+import { ConfigKeyConstant } from 'src/shared/constant/configkey.constant';
 import { AgendaBackgroundHandler } from './background-handler';
-import { InfrastructureModule } from '../infrastructure.module';
-import { IBackgroundHandler } from 'src/application/interface/background-handler/i-background-handler';
 import Agenda from 'agenda';
 import * as fs from 'fs';
 import * as path from 'path';
-import { jobs } from 'src/domain/decorator/job.decorator';
+import { jobs } from 'src/shared/decorator/job.decorator';
 import { JobSchedulerService } from './job/job-scheduler.job';
+import { PersistenceModule } from '../persistence/persistence.module';
+import { FileServiceModule } from '../file-service/file-service.module';
 
 const jobDir = path.resolve(__dirname, './job');
 
@@ -31,16 +31,8 @@ const agendaProvider = {
 };
 
 @Module({
-   imports: [forwardRef(() => InfrastructureModule)],
-   providers: [
-      agendaProvider,
-      {
-         provide: IBackgroundHandler,
-         useClass: AgendaBackgroundHandler,
-      },
-      ...jobs,
-      JobSchedulerService,
-   ],
-   exports: [IBackgroundHandler, ...jobs],
+   imports: [PersistenceModule, FileServiceModule],
+   providers: [agendaProvider, AgendaBackgroundHandler, ...jobs, JobSchedulerService],
+   exports: [AgendaBackgroundHandler, ...jobs],
 })
 export class BackgroundHandlerModule {}

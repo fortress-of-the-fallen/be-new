@@ -1,0 +1,1 @@
+export const AUTH_SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 30;

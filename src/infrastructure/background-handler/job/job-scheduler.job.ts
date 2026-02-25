@@ -1,23 +1,23 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import Agenda from 'agenda';
-import { IJob } from 'src/application/interface/background-handler/i-job';
-import { ILogger } from 'src/application/interface/logger/i-logger';
-import { jobs } from 'src/domain/decorator/job.decorator';
+import { jobs } from 'src/shared/decorator/job.decorator';
+
+type JobContract = {
+   cron: string;
+   execute: () => Promise<void>;
+};
 
 @Injectable()
 export class JobSchedulerService implements OnModuleInit {
+   private readonly logger = new Logger(JobSchedulerService.name);
+
    constructor(
       private readonly moduleRef: ModuleRef,
 
       @Inject('AGENDA_TOKEN')
       private readonly agenda: Agenda,
-
-      @Inject(ILogger)
-      private readonly logger: ILogger,
-   ) {
-      this.logger.setContext(JobSchedulerService.name);
-   }
+   ) {}
 
    async onModuleInit() {
       this.logger.log('JobSchedulerService initialized');
@@ -25,7 +25,7 @@ export class JobSchedulerService implements OnModuleInit {
       await this.agenda.start();
 
       for (const JobClass of jobs) {
-         const jobInstance: IJob = await this.moduleRef.resolve(JobClass, undefined, {
+         const jobInstance: JobContract = await this.moduleRef.resolve(JobClass, undefined, {
             strict: false,
          });
 

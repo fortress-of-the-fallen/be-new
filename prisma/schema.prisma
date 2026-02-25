@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD.svg"
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+  output   = "./schema.dbml"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid()) @map("_id")
+  name          String?
+  username      String?   @unique
+  email         String?   @unique
+  password      String?
+  role          String[]
+  maxSession    Int       @default(5)
+  max_game_user Int       @default(3)
+  isDeleted     Boolean   @default(false)
+  isLocked      Boolean   @default(false)
+  sessions      Session[]
+  characters    Character[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @map("_id")
+  user      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  userAgent String?
+  ipAddress String?
+  isDeleted Boolean  @default(false)
+  isLocked  Boolean  @default(false)
+  account   User     @relation(fields: [user], references: [id])
+
+  @@index([user])
+  @@map("sessions")
+}
+
+model Character {
+  id             String   @id @map("_id")
+  character_name String
+  race           String
+  gender         String
+  userId         String
+  isDeleted      Boolean  @default(false)
+  isLocked       Boolean  @default(false)
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("characters")
+}
+
+model Backup {
+  id        String   @id @default(uuid()) @map("_id")
+  backUpType String
+  filePath  String
+  createAt  DateTime @default(now())
+  isDeleted Boolean  @default(false)
+  isLocked  Boolean  @default(false)
+
+  @@index([backUpType, createAt])
+  @@map("backups")
+}

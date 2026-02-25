@@ -1,7 +1,6 @@
 import { Server, Socket } from 'socket.io';
-import { IHub } from 'src/application/interface/broadcast-handler/i-hub';
 
-export abstract class BaseHub implements IHub {
+export abstract class BaseHub {
    abstract route: string;
    private handlers: Map<string, (data: any, ack: (res: any) => void) => void> = new Map();
 

@@ -44,6 +44,21 @@ Welcome to API documentation. This document describes the available endpoints, r
 | Base.Message.MissingUserAgent    | Required User-Agent header is missing                      |
 | Base.Message.InvalidHeader       | One or more headers in the request are invalid             |
 
+## Auth Error
+
+| ErrorCode                        | Description                                                  |
+| -------------------------------- | ------------------------------------------------------------ |
+| Auth.Register.PasswordMismatch   | Password and confirm password do not match                   |
+| Auth.Register.UsernameExists     | Username is already registered                               |
+| Auth.Register.EmailExists        | Email is already registered                                  |
+| Auth.Login.UserNotFound          | No user account was found for the provided identity          |
+| Auth.Login.InvalidCredentials    | Username or password is incorrect                            |
+| Auth.Login.MaxSessionReached     | Maximum concurrent sessions has been reached                 |
+| Auth.Login.ClientNotConnected    | Login broadcast client is not connected                      |
+| Auth.Logout.SessionIdRequired    | The `session-id` header is required for logout               |
+| Auth.Logout.UserNotFound         | User account for the current session was not found           |
+| Auth.Logout.SessionNotFound      | The provided `session-id` does not match any active session  |
+
 # Conclusion
 
 - For more details, refer to the full API reference.

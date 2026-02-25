@@ -1,4 +1,4 @@
-import { Hub } from 'src/domain/decorator/hub.decorator';
+import { Hub } from 'src/shared/decorator/hub.decorator';
 import { BaseHub } from './baes.hub';
 import { Socket } from 'socket.io';
 

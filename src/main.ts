@@ -1,22 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from 'src/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { GlobalInterceptor } from 'src/presentation/interceptor/global.interceptor';
-import { HttpExceptionFilter } from 'src/presentation/filter/http-exception.filter';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { GlobalInterceptor } from 'src/api/interceptor/global.interceptor';
+import { HttpExceptionFilter } from 'src/api/filter/http-exception.filter';
 import { join } from 'path';
 import { marked } from 'marked';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ConfigKeyConstant } from './domain/constant/configkey.constant';
-import { ILogger } from './application/interface/logger/i-logger';
+import { ConfigKeyConstant } from './shared/constant/configkey.constant';
 import rateLimit from 'express-rate-limit';
-import { ValidateException } from './domain/exception/validate-exception';
-import { ReqValidateFilter } from './presentation/filter/req-validate.filter';
-import { AllExceptionFilter } from './presentation/filter/all-exception.filter';
-import { Seeding } from './infrastructure/data-access/seeding/seeding';
+import { ValidateException } from './shared/exception/validate-exception';
+import { ReqValidateFilter } from './api/filter/req-validate.filter';
+import { AllExceptionFilter } from './api/filter/all-exception.filter';
+import { Seeding } from './infrastructure/persistence/seeding/seeding';
 
 async function bootstrap() {
+   const bootstrapLogger = new Logger('Main');
    clearOldLogsIfDev();
 
    const app = await NestFactory.create(AppModule, {
@@ -48,31 +48,16 @@ async function bootstrap() {
       }),
    );
 
-   const logger: ILogger = await app.resolve(ILogger);
-   logger.setContext('Main');
-   logger.log('Application is starting..., NODE_ENV: ' + ConfigKeyConstant.NodeEnv);
-   app.useLogger(logger);
+   bootstrapLogger.log('Application is starting..., NODE_ENV: ' + ConfigKeyConstant.NodeEnv);
 
    app.enableVersioning({
       type: VersioningType.URI,
    });
 
    const globalInterceptor = await app.resolve(GlobalInterceptor);
-   const interceptorLogger: ILogger = await app.resolve(ILogger);
-   interceptorLogger.setContext('GlobalInterceptor');
    app.useGlobalInterceptors(globalInterceptor);
 
-   const httpExceptionFilter: ILogger = await app.resolve(ILogger);
-   const validateFilter: ILogger = await app.resolve(ILogger);
-   const allExceptionFilter: ILogger = await app.resolve(ILogger);
-
-   app.useGlobalFilters(
-      new AllExceptionFilter(
-         allExceptionFilter,
-         new HttpExceptionFilter(httpExceptionFilter),
-         new ReqValidateFilter(validateFilter),
-      ),
-   );
+   app.useGlobalFilters(new AllExceptionFilter(new HttpExceptionFilter(), new ReqValidateFilter()));
 
    const config = new DocumentBuilder()
       .setTitle('API Docs')

@@ -1,21 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ICacheManager } from 'src/application/interface/cache-manager/i-cache-manager';
-import { RedisCacheManager } from './cache-manager';
 import Redis from 'ioredis';
-import { ConfigKeyConstant } from 'src/domain/constant/configkey.constant';
-import { ILogger } from 'src/application/interface/logger/i-logger';
-import { Logger } from '../logger/logger';
+import { ConfigKeyConstant } from 'src/shared/constant/configkey.constant';
 
 @Module({
    providers: [
-      {
-         provide: ILogger,
-         useClass: Logger,
-      },
-      {
-         provide: ICacheManager,
-         useClass: RedisCacheManager,
-      },
       {
          provide: 'REDIS_CLIENT',
          useFactory: () => {
@@ -28,6 +16,6 @@ import { Logger } from '../logger/logger';
          },
       },
    ],
-   exports: [ICacheManager],
+   exports: ['REDIS_CLIENT'],
 })
 export class CacheModule {}

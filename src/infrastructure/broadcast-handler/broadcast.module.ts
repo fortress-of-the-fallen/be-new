@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppGateway } from './websocket-gateway';
 import path from 'path';
 import * as fs from 'fs';
-import { hubs } from 'src/domain/decorator/hub.decorator';
-import { IBroadcastHandler } from 'src/application/interface/broadcast-handler/i-broadcast-handler';
+import { hubs } from 'src/shared/decorator/hub.decorator';
 import { BroadcastHandler } from './broadcast-handler';
 
 const hubDir = path.resolve(__dirname, './hub');
@@ -18,15 +17,8 @@ fs.readdirSync(hubDir)
 const registeredHubs = hubs;
 
 @Module({
-   providers: [
-      AppGateway,
-      ...registeredHubs,
-      {
-         provide: IBroadcastHandler,
-         useClass: BroadcastHandler,
-      },
-   ],
+   providers: [AppGateway, ...registeredHubs, BroadcastHandler],
 
-   exports: [IBroadcastHandler],
+   exports: [BroadcastHandler],
 })
 export class BroadcastModule {}

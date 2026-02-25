@@ -1,5 +1,5 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { ConfigKeyConstant } from 'src/domain/constant/configkey.constant';
+import { ConfigKeyConstant } from 'src/shared/constant/configkey.constant';
 import * as nodemailer from 'nodemailer';
 
 @Injectable({ scope: Scope.DEFAULT })

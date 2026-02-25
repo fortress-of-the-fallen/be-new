@@ -1,0 +1,43 @@
+erDiagram
+  "users" {
+    String id PK "default: uuid()"
+    String name
+    String username
+    String email
+    String password
+    String role
+    Int maxSession  "default: 5"
+    Int max_game_user  "default: 3"
+    Boolean isDeleted  "default: false"
+    Boolean isLocked  "default: false"
+  }
+  "sessions" {
+    String id PK
+    String user FK
+    DateTime createdAt  "default: now()"
+    DateTime expiresAt
+    Boolean isRevoked  "default: false"
+    String userAgent
+    String ipAddress
+    Boolean isDeleted  "default: false"
+    Boolean isLocked  "default: false"
+  }
+  "characters" {
+    String id PK
+    String character_name
+    String race
+    String gender
+    String userId FK
+    Boolean isDeleted  "default: false"
+    Boolean isLocked  "default: false"
+  }
+  "backups" {
+    String id PK "default: uuid()"
+    String backUpType
+    String filePath
+    DateTime createAt  "default: now()"
+    Boolean isDeleted  "default: false"
+    Boolean isLocked  "default: false"
+  }
+  "users" ||--o{ "sessions" : "account"
+  "users" ||--o{ "characters" : "user"

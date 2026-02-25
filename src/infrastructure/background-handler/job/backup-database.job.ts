@@ -1,61 +1,66 @@
-import { Inject } from '@nestjs/common';
-import { IJob } from 'src/application/interface/background-handler/i-job';
-import { IBaseWriteUnitOfWork } from 'src/application/interface/data-access/base-data-access/unit-of-work/i-write.unit-of-work';
-import { IFileService } from 'src/application/interface/file-service/i-file-service';
-import { ILogger } from 'src/application/interface/logger/i-logger';
-import { entities } from 'src/domain/decorator/entity.decorator';
-import { Job } from 'src/domain/decorator/job.decorator';
-import { BackupEntity } from 'src/domain/entity/back-up.entity';
-import { getEnum } from 'src/domain/enum/back-up.enum';
-import { TimeHelper } from 'src/domain/helper/time.helper';
+import { Logger } from '@nestjs/common';
+import { FileService } from 'src/infrastructure/file-service/file-service';
+import { Job } from 'src/shared/decorator/job.decorator';
+import { BackUpEnum } from 'src/infrastructure/background-handler/job/back-up.enum';
+import { TimeHelper } from 'src/shared/helper/time.helper';
+import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 
 @Job()
-export class DatabaseBackupJob implements IJob {
+export class DatabaseBackupJob {
+   private readonly logger = new Logger(DatabaseBackupJob.name);
+
    constructor(
-      @Inject(ILogger)
-      private readonly logger: ILogger,
-
-      @Inject(IBaseWriteUnitOfWork)
-      private readonly baseWriteUnitOfWork: IBaseWriteUnitOfWork,
-
-      @Inject(IFileService)
-      private readonly fileService: IFileService,
-   ) {
-      this.logger.setContext(DatabaseBackupJob.name);
-   }
+      private readonly prisma: PrismaService,
+      private readonly fileService: FileService,
+   ) {}
    cron: string = '0 0 * * *';
    execute: () => Promise<void> = async () => {
-      const backUpRepo = this.baseWriteUnitOfWork.getRepository<BackupEntity>(BackupEntity.name);
+      const backupTargets: Array<{
+         type: BackUpEnum;
+         fileName: string;
+         getData: () => Promise<any[]>;
+      }> = [
+         {
+            type: BackUpEnum.User,
+            fileName: 'backup-User.json',
+            getData: () => this.prisma.user.findMany(),
+         },
+         {
+            type: BackUpEnum.Session,
+            fileName: 'backup-Session.json',
+            getData: () => this.prisma.session.findMany(),
+         },
+      ];
 
-      const baseEntities = entities;
-
-      for (const entity of baseEntities) {
-         const backUpEnum = getEnum(entity.name);
-         if (backUpEnum) {
-            if (await backUpRepo.any({ createAt: TimeHelper.getToday(), backUpType: backUpEnum })) {
-               this.logger.warn('Backup already exists for today.');
-               continue;
-            }
-
-            const repo = this.baseWriteUnitOfWork.getRepository<any>(entity.name);
-            const data = await repo.getBackupData();
-
-            const fileBuffer = this.convertDataToFileBuffer(data);
-            const BackUpFile = await this.fileService.uploadFile(
-               fileBuffer,
-               `backup-${entity.name}.json`,
-               'database-backups',
-            );
-
-            await backUpRepo.add({
-               backUpType: backUpEnum,
-               filePath: BackUpFile,
+      for (const target of backupTargets) {
+         const exists = await this.prisma.backup.count({
+            where: {
+               backUpType: target.type,
                createAt: TimeHelper.getToday(),
-            });
-
-            await this.baseWriteUnitOfWork.saveChanges();
-            this.logger.log(`Backing up entities... ${fileBuffer.length} bytes`);
+            },
+         });
+         if (exists > 0) {
+            this.logger.warn(`Backup already exists for today: ${target.type}`);
+            continue;
          }
+
+         const data = await target.getData();
+         const fileBuffer = this.convertDataToFileBuffer(data);
+         const backUpFile = await this.fileService.uploadFile(
+            fileBuffer,
+            target.fileName,
+            'database-backups',
+         );
+
+         await this.prisma.backup.create({
+            data: {
+               backUpType: target.type,
+               filePath: backUpFile,
+               createAt: TimeHelper.getToday(),
+            },
+         });
+
+         this.logger.log(`Backing up ${target.type}... ${fileBuffer.length} bytes`);
       }
    };
 

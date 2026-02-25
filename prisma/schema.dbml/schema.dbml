@@ -1,0 +1,55 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table users {
+  id String [pk]
+  name String
+  username String [unique]
+  email String [unique]
+  password String
+  role String[] [not null]
+  maxSession Int [not null, default: 5]
+  max_game_user Int [not null, default: 3]
+  isDeleted Boolean [not null, default: false]
+  isLocked Boolean [not null, default: false]
+  sessions sessions [not null]
+  characters characters [not null]
+}
+
+Table sessions {
+  id String [pk]
+  user String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  expiresAt DateTime [not null]
+  isRevoked Boolean [not null, default: false]
+  userAgent String
+  ipAddress String
+  isDeleted Boolean [not null, default: false]
+  isLocked Boolean [not null, default: false]
+  account users [not null]
+}
+
+Table characters {
+  id String [pk]
+  character_name String [not null]
+  race String [not null]
+  gender String [not null]
+  userId String [not null]
+  isDeleted Boolean [not null, default: false]
+  isLocked Boolean [not null, default: false]
+  user users [not null]
+}
+
+Table backups {
+  id String [pk]
+  backUpType String [not null]
+  filePath String [not null]
+  createAt DateTime [default: `now()`, not null]
+  isDeleted Boolean [not null, default: false]
+  isLocked Boolean [not null, default: false]
+}
+
+Ref: sessions.user > users.id
+
+Ref: characters.userId > users.id
