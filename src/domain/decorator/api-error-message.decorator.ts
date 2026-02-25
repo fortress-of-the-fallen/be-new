@@ -3,21 +3,36 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { ExecutionRes } from '../../presentation/model/res/base/execution-res.model';
 
+/**
+ * Options for documenting a single API error response.
+ */
 interface ApiErrorMessageOptions {
    status?: number | string;
    description?: string;
 }
 
+/**
+ * A key-value object that maps error identifiers to message strings.
+ */
 type ErrorMessageObject = Record<string, string>;
 
+/**
+ * Resolves a message path into a human-readable description.
+ */
 function getMessageDescription(messagePath: string): string {
    return messagePath;
 }
 
+/**
+ * Extracts all message values from a keyed message object.
+ */
 function extractMessagesFromObject(messageObject: ErrorMessageObject): string[] {
    return Object.values(messageObject);
 }
 
+/**
+ * Creates a Swagger error response decorator for a single error message.
+ */
 export function ApiErrorMessage(message: string, options: ApiErrorMessageOptions = {}) {
    const { status = 400, description } = options;
 
@@ -31,6 +46,9 @@ export function ApiErrorMessage(message: string, options: ApiErrorMessageOptions
    );
 }
 
+/**
+ * Creates multiple Swagger error response decorators from either a list or an object map.
+ */
 export function ApiErrorMessages(
    messagesOrObject: Array<{ message: string; status?: number | string }> | ErrorMessageObject,
    options: { status?: number } = {},

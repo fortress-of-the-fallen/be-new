@@ -1,7 +1,7 @@
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { Body, Delete, Get, Inject, Post } from '@nestjs/common';
-import { ApiHeader, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Delete, Inject, Post } from '@nestjs/common';
+import { ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LoginReqDto } from 'src/application/feature/auth/command/login-command/login-command-req.dto';
 import { LoginCommand } from 'src/application/feature/auth/command/login-command/login-command.feature';
 import { LogoutCommand } from 'src/application/feature/auth/command/logout-command/logout-command.feature';
@@ -9,10 +9,7 @@ import { RegisterReqDto } from 'src/application/feature/auth/command/register-co
 import { RegisterCommand } from 'src/application/feature/auth/command/register-command/register-command.feature';
 import { ILogger } from 'src/application/interface/logger/i-logger';
 import { IMediator } from 'src/application/interface/mediator/i-mediator';
-import {
-   ApiErrorMessage,
-   ApiErrorMessages,
-} from 'src/domain/decorator/api-error-message.decorator';
+import { ApiErrorMessages } from 'src/domain/decorator/api-error-message.decorator';
 import { AuthControllerMessage } from 'src/domain/message/auth-controller.message';
 import { Controllers } from 'src/domain/decorator/controller.decorator';
 import { RateLimit } from 'src/domain/decorator/rate-limit.decorator';
@@ -37,17 +34,6 @@ export class AuthController {
       @InjectMapper()
       private readonly mapper: Mapper,
    ) {}
-
-   @Get('github-login')
-   @ApiOperation({ summary: 'Github login' })
-   @RateLimit({ limit: 5, ttl: 60 })
-   @ApiResponse({ status: 400, description: 'Error: Auth.Login.UserNotFound' })
-   @ApiErrorMessages(AuthControllerMessage.Login)
-   async getSamples(): Promise<string> {
-      // const response: ExecutionRes = new ExecutionRes(); // Changed to English: // const response: ExecutionRes = new ExecutionRes();
-
-      return 'response';
-   }
 
    @Post('register')
    @ApiOperation({ summary: 'Register user' })
