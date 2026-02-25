@@ -40,6 +40,7 @@ Table characters {
   isLocked Boolean [not null, default: false]
   user users [not null]
   appearance character_appearances
+  stats character_stats
 }
 
 Table character_appearances {
@@ -51,6 +52,31 @@ Table character_appearances {
   hairColor String [not null]
   beardColor String [not null]
   eyeColor String [not null]
+  character characters [not null]
+}
+
+Table character_stats {
+  id String [pk]
+  characterId String [unique, not null]
+  str Int [not null]
+  dex Int [not null]
+  con Int [not null]
+  int Int [not null]
+  wis Int [not null]
+  cha Int [not null]
+  unspentPoints Int [not null, default: 0]
+  hp Int [not null]
+  mp Int [not null]
+  patk Int [not null]
+  datk Int [not null]
+  matk Int [not null]
+  mdef Int [not null]
+  spd Int [not null]
+  crit Int [not null]
+  acc Int [not null]
+  eva Int [not null]
+  formulaVersion Int [not null, default: 1]
+  updatedAt DateTime [not null]
   character characters [not null]
 }
 
@@ -68,3 +94,5 @@ Ref: sessions.user > users.id
 Ref: characters.userId > users.id
 
 Ref: character_appearances.characterId - characters.id
+
+Ref: character_stats.characterId - characters.id

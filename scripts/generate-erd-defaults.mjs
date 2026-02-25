@@ -12,6 +12,7 @@ const lines = raw.split(/\r?\n/);
 
 const models = [];
 let current = null;
+let pendingDoc = '';
 const scalarTypes = new Set([
   'String',
   'Boolean',
@@ -50,6 +51,12 @@ function extractDefault(attrs) {
 
 for (const line of lines) {
   const trimmed = line.trim();
+
+  if (trimmed.startsWith('///')) {
+    const docLine = trimmed.replace(/^\/\/\/\s?/, '').trim();
+    pendingDoc = pendingDoc ? `${pendingDoc} ${docLine}` : docLine;
+    continue;
+  }
 
   if (!current) {
     const mm = trimmed.match(/^model\s+(\w+)\s+\{$/);
@@ -103,8 +110,10 @@ for (const line of lines) {
     isId,
     isUnique,
     defaultValue,
+    doc: pendingDoc,
     rel,
   });
+  pendingDoc = '';
 }
 
 const modelByName = new Map(models.map(m => [m.name, m]));
@@ -123,8 +132,15 @@ for (const model of models) {
     if (f.rel) continue; // hide relation object fields, keep FK scalar fields
     if (!scalarTypes.has(f.type)) continue;
     const key = f.isId ? 'PK' : fkFields.has(f.name) ? 'FK' : '';
-    const safeDefault = f.defaultValue.replace(/"/g, "'");
-    const comment = f.defaultValue ? `"default: ${safeDefault}"` : '';
+    const commentParts = [];
+    if (f.defaultValue) {
+      const safeDefault = f.defaultValue.replace(/"/g, "'");
+      commentParts.push(`default: ${safeDefault}`);
+    }
+    if (f.doc) {
+      commentParts.push(f.doc.replace(/"/g, "'"));
+    }
+    const comment = commentParts.length > 0 ? `"${commentParts.join(' | ')}"` : '';
     mmd.push(`    ${f.type} ${f.name} ${key} ${comment}`.trimEnd());
   }
   mmd.push('  }');

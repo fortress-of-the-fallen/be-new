@@ -3,6 +3,11 @@ import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { IdentityHelper } from 'src/shared/helper/identity.helper';
 import { CharacterControllerMessage } from '../character-controller.message';
 import { CreateCharacterDto } from './create-character.dto';
+import {
+   calculateDerivedStats,
+   CHARACTER_STAT_FORMULA_VERSION,
+   getInitialBaseAttributesByRace,
+} from '../stats';
 
 @Injectable()
 export class CreateCharacterApplicationService {
@@ -48,6 +53,8 @@ export class CreateCharacterApplicationService {
 
       const characterId = IdentityHelper.generateUUID();
       const appearanceId = IdentityHelper.generateUUID();
+      const baseAttributes = getInitialBaseAttributesByRace(reqDto.race);
+      const derivedStats = calculateDerivedStats(baseAttributes);
       await this.prisma.$transaction([
          this.prisma.character.create({
             data: {
@@ -68,6 +75,15 @@ export class CreateCharacterApplicationService {
                hairColor: reqDto.hairColor,
                beardColor: reqDto.beardColor,
                eyeColor: reqDto.eyeColor,
+            },
+         }),
+         this.prisma.characterStats.create({
+            data: {
+               characterId,
+               ...baseAttributes,
+               unspentPoints: 0,
+               ...derivedStats,
+               formulaVersion: CHARACTER_STAT_FORMULA_VERSION,
             },
          }),
       ]);

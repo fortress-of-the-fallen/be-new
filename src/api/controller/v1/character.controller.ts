@@ -1,4 +1,4 @@
-import { Body, Delete, Get, Headers, Param, Post } from '@nestjs/common';
+import { Body, Delete, Get, Headers, Param, Patch, Post } from '@nestjs/common';
 import { ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiErrorMessages } from 'src/shared/decorator/api-error-message.decorator';
 import { CharacterControllerMessage } from 'src/features/character/application/character-controller.message';
@@ -9,10 +9,15 @@ import { AllRoles } from 'src/features/auth/application/role-base.enum';
 import { isNullOrEmpty } from 'src/shared/helper/string.helper';
 import { CreateCharacterReq } from 'src/api/model/req/character/create-character-req.model';
 import { DeleteCharacterReq } from 'src/api/model/req/character/delete-character-req.model';
-import { CharacterRes } from 'src/api/model/res/character/character-res.model';
+import { UpdateCharacterBaseAttributesReq } from 'src/api/model/req/character/update-character-base-attributes-req.model';
+import { CharacterRes, CharacterStatsRes } from 'src/api/model/res/character/character-res.model';
 import { ExecutionRes } from 'src/api/model/res/base/execution-res.model';
 import { ResultRes } from 'src/api/model/res/base/result-res.model';
-import { CharacterApplicationService, CreateCharacterDto } from 'src/features/character/application';
+import {
+   CharacterApplicationService,
+   CreateCharacterDto,
+   UpdateCharacterBaseAttributesDto,
+} from 'src/features/character/application';
 
 @ApiTags('Character')
 @Controllers({ path: 'api/character', version: '1' })
@@ -122,6 +127,49 @@ export class CharacterController {
       }
 
       response.success = true;
+      return response;
+   }
+
+   @Patch(':characterId/stats/base')
+   @ApiOperation({ summary: 'Update base attributes of a character' })
+   @ApiHeader({
+      name: 'session-id',
+      description: 'Session ID for the user',
+      required: true,
+   })
+   @ApiParam({
+      name: 'characterId',
+      required: true,
+      description: 'Character ID to update stats',
+   })
+   @ApiOkResponse({
+      type: ResultRes<CharacterStatsRes>,
+      description: 'Returns updated character stats',
+   })
+   @ApiErrorMessages(CharacterControllerMessage.UpdateBaseAttributes)
+   @RateLimit({ limit: 10, ttl: 60 })
+   @Roles(...AllRoles)
+   async updateBaseAttributes(
+      @Param() req: DeleteCharacterReq,
+      @Body() body: UpdateCharacterBaseAttributesReq,
+      @Headers('session-id') sessionId?: string,
+   ): Promise<ResultRes<CharacterStatsRes>> {
+      const response: ResultRes<CharacterStatsRes> = new ResultRes<CharacterStatsRes>();
+      const reqDto = Object.assign(new UpdateCharacterBaseAttributesDto(), body);
+
+      const [error, result] = await this.characterApplicationService.updateCharacterBaseAttributes(
+         req.characterId,
+         reqDto,
+         sessionId,
+      );
+
+      if (!isNullOrEmpty(error)) {
+         response.success = false;
+         response.errorCode = error;
+         return response;
+      }
+
+      response.result = result;
       return response;
    }
 }

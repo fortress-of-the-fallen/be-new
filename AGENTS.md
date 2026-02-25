@@ -39,6 +39,14 @@
   - sample request (`curl`) for the main flow.
 - If a new feature docs page is added, update the API portal links (currently in `assets/md/swagger-home.md`) so users can navigate to it.
 
+## ERD Defaults Regeneration Rule
+
+- After completing implementation for any feature that changes database schema or entity relations, regenerate ERD defaults artifacts:
+  - Run: `npm run erd:defaults`
+  - Ensure both files are updated accordingly:
+    - `prisma/ERD-defaults.mmd`
+    - `prisma/ERD-defaults.svg`
+
 ## Docs UI Rule
 
 - Keep docs navigation centered on the new pages:

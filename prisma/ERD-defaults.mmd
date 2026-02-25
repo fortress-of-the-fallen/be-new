@@ -41,6 +41,29 @@ erDiagram
     String beardColor
     String eyeColor
   }
+  "character_stats" {
+    String id PK "default: uuid()"
+    String characterId FK "FK character (1-1)"
+    Int str  "Base Attribute: Strength"
+    Int dex  "Base Attribute: Dexterity"
+    Int con  "Base Attribute: Constitution"
+    Int int  "Base Attribute: Intelligence"
+    Int wis  "Base Attribute: Wisdom"
+    Int cha  "Base Attribute: Charisma"
+    Int unspentPoints  "default: 0 | Stat points chưa phân bổ"
+    Int hp  "Derived: Max HP"
+    Int mp  "Derived: Max MP"
+    Int patk  "Derived: Physical Attack"
+    Int datk  "Derived: Physical Defense"
+    Int matk  "Derived: Magic Attack"
+    Int mdef  "Derived: Magic Defense"
+    Int spd  "Derived: Speed"
+    Int crit  "Derived: Critical Rate"
+    Int acc  "Derived: Accuracy"
+    Int eva  "Derived: Evasion"
+    Int formulaVersion  "default: 1 | Version công thức tính derived stats"
+    DateTime updatedAt
+  }
   "backups" {
     String id PK "default: uuid()"
     String backUpType
@@ -52,3 +75,4 @@ erDiagram
   "users" ||--o{ "sessions" : "account"
   "users" ||--o{ "characters" : "user"
   "characters" ||--o| "character_appearances" : "character"
+  "characters" ||--o| "character_stats" : "character"

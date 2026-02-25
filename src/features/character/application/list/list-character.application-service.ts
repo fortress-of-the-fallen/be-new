@@ -20,6 +20,7 @@ export class ListCharacterApplicationService {
          },
          include: {
             appearance: true,
+            stats: true,
          },
       });
 

@@ -5,6 +5,7 @@ declare module '@prisma/client' {
       session: any;
       character: any;
       characterAppearance: any;
+      characterStats: any;
       backup: any;
       $connect(): Promise<void>;
       $transaction(input: any): Promise<any>;

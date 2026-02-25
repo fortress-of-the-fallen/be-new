@@ -60,6 +60,7 @@ model Character {
   isLocked       Boolean  @default(false)
   user           User     @relation(fields: [userId], references: [id])
   appearance     CharacterAppearance?
+  stats          CharacterStats?
 
   @@index([userId])
   @@map("characters")
@@ -77,6 +78,52 @@ model CharacterAppearance {
   character  Character @relation(fields: [characterId], references: [id])
 
   @@map("character_appearances")
+}
+
+model CharacterStats {
+  id            String    @id @default(uuid()) @map("_id")
+  /// FK character (1-1)
+  characterId    String   @unique
+  /// Base Attribute: Strength
+  str           Int
+  /// Base Attribute: Dexterity
+  dex           Int
+  /// Base Attribute: Constitution
+  con           Int
+  /// Base Attribute: Intelligence
+  int           Int
+  /// Base Attribute: Wisdom
+  wis           Int
+  /// Base Attribute: Charisma
+  cha           Int
+  /// Stat points chưa phân bổ
+  unspentPoints Int       @default(0)
+  /// Derived: Max HP
+  hp            Int
+  /// Derived: Max MP
+  mp            Int
+  /// Derived: Physical Attack
+  patk          Int
+  /// Derived: Physical Defense
+  datk          Int
+  /// Derived: Magic Attack
+  matk          Int
+  /// Derived: Magic Defense
+  mdef          Int
+  /// Derived: Speed
+  spd           Int
+  /// Derived: Critical Rate
+  crit          Int
+  /// Derived: Accuracy
+  acc           Int
+  /// Derived: Evasion
+  eva           Int
+  /// Version công thức tính derived stats
+  formulaVersion Int      @default(1)
+  updatedAt     DateTime  @updatedAt
+  character     Character @relation(fields: [characterId], references: [id])
+
+  @@map("character_stats")
 }
 
 model Backup {

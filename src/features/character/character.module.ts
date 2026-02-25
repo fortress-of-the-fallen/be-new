@@ -4,6 +4,7 @@ import {
    CreateCharacterApplicationService,
    DeleteCharacterApplicationService,
    ListCharacterApplicationService,
+   UpdateCharacterBaseAttributesApplicationService,
 } from './application';
 import { PersistenceModule } from 'src/infrastructure/persistence/persistence.module';
 
@@ -14,6 +15,7 @@ import { PersistenceModule } from 'src/infrastructure/persistence/persistence.mo
       CreateCharacterApplicationService,
       DeleteCharacterApplicationService,
       ListCharacterApplicationService,
+      UpdateCharacterBaseAttributesApplicationService,
    ],
    exports: [CharacterApplicationService],
 })
