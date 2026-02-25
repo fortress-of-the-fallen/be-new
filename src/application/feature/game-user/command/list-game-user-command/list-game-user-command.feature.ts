@@ -11,9 +11,10 @@ import { Request as ExpressRequest } from 'express';
 export class ListGameUserCommand implements IRequest<[string, GameUser[]]> {}
 
 @RequestHandler(ListGameUserCommand)
-export class ListGameUserCommandHandler
-   implements IRequestHandler<ListGameUserCommand, [string, GameUser[]]>
-{
+export class ListGameUserCommandHandler implements IRequestHandler<
+   ListGameUserCommand,
+   [string, GameUser[]]
+> {
    constructor(
       @Inject(IBaseWriteUnitOfWork)
       private readonly unitOfWork: IBaseWriteUnitOfWork,

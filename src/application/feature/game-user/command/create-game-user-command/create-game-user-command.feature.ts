@@ -17,9 +17,10 @@ export class CreateGameUserCommand implements IRequest<[string, string]> {
 }
 
 @RequestHandler(CreateGameUserCommand)
-export class CreateGameUserCommandHandler
-   implements IRequestHandler<CreateGameUserCommand, [string, string]>
-{
+export class CreateGameUserCommandHandler implements IRequestHandler<
+   CreateGameUserCommand,
+   [string, string]
+> {
    constructor(
       @Inject(IBaseWriteUnitOfWork)
       private readonly unitOfWork: IBaseWriteUnitOfWork,
