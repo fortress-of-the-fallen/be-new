@@ -125,9 +125,10 @@ services:
       - /bin/sh
       - -c
       - |
-        npm install --include=dev --no-audit --no-fund;
-        npx prisma generate --generator client;
-        npm run build;
+        set -eux;
+        npm install --include=dev --no-audit --no-fund &&
+        npx prisma generate --generator client &&
+        npm run build &&
         if [ -f /usr/src/app/dist/src/main.js ]; then
           ENTRY=/usr/src/app/dist/src/main.js;
         elif [ -f /usr/src/app/dist/main.js ]; then
