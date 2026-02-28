@@ -79,7 +79,7 @@ services:
         mc alias set myminio http://minio:9000 admin Password@1234 &&
         mc mb myminio/fotff || true &&
         mc admin user add myminio appuser appsecret || true &&
-        mc admin policy attach myminio readwrite --user appuser
+        mc admin policy attach myminio readwrite --user appuser || true
       "
     networks:
       - fotff
@@ -118,6 +118,26 @@ services:
       MINIO_BUCKET: fotf
       SMTP_USER: "..."
       SMTP_PASS: "..."
+    command:
+      - /bin/sh
+      - -c
+      - |
+        NODE_PATH=/usr/src/app/dist node /usr/src/app/dist/src/main.js
+    networks:
+      - fotff
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: "no"
+    depends_on:
+      web:
+        condition: service_started
+    command:
+      - "http"
+      - "web:3000"
+      - "--url=preferably-upright-walleye.ngrok-free.app"
+    environment:
+      NGROK_AUTHTOKEN: 2vYjT5j40edREjK6Qbpysfr5TyK_4qhEj643Y4rxNCHoM1wPo
     networks:
       - fotff
 
