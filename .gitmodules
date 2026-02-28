@@ -4,3 +4,6 @@
 [submodule "telegram-bot"]
 	path = telegram-bot
 	url = https://github.com/fortress-of-the-fallen/telegram-bot.git
+[submodule "deploy"]
+	path = deploy
+	url = https://github.com/fortress-of-the-fallen/deploy.git

@@ -9,7 +9,7 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build
+RUN rm -rf dist && npx prisma generate --generator client && npm run build
 
 # ================================================
 # Stage 2: Production
