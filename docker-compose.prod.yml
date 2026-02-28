@@ -85,9 +85,8 @@ services:
       - fotff
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: node:20.19.5-bullseye-slim
+    working_dir: /usr/src/app
     restart: unless-stopped
     depends_on:
       mongo:
@@ -118,10 +117,17 @@ services:
       MINIO_BUCKET: fotf
       SMTP_USER: "..."
       SMTP_PASS: "..."
+    volumes:
+      - ./:/usr/src/app
+      - web_node_modules:/usr/src/app/node_modules
+      - web_npm_cache:/root/.npm
     command:
       - /bin/sh
       - -c
       - |
+        npm install --include=dev --no-audit --no-fund;
+        npx prisma generate --generator client;
+        npm run build;
         if [ -f /usr/src/app/dist/src/main.js ]; then
           ENTRY=/usr/src/app/dist/src/main.js;
         elif [ -f /usr/src/app/dist/main.js ]; then
@@ -150,3 +156,7 @@ services:
 
 networks:
   fotff:
+
+volumes:
+  web_node_modules:
+  web_npm_cache:
