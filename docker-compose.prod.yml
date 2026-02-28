@@ -129,7 +129,7 @@ services:
         else
           echo "Cannot find app entrypoint in dist/" && ls -la /usr/src/app/dist && exit 1;
         fi;
-        NODE_PATH=/usr/src/app/dist node "$ENTRY"
+        NODE_PATH=/usr/src/app/dist node "$$ENTRY"
     networks:
       - fotff
 
