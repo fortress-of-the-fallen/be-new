@@ -122,7 +122,14 @@ services:
       - /bin/sh
       - -c
       - |
-        NODE_PATH=/usr/src/app/dist node /usr/src/app/dist/src/main.js
+        if [ -f /usr/src/app/dist/src/main.js ]; then
+          ENTRY=/usr/src/app/dist/src/main.js;
+        elif [ -f /usr/src/app/dist/main.js ]; then
+          ENTRY=/usr/src/app/dist/main.js;
+        else
+          echo "Cannot find app entrypoint in dist/" && ls -la /usr/src/app/dist && exit 1;
+        fi;
+        NODE_PATH=/usr/src/app/dist node "$ENTRY"
     networks:
       - fotff
 
