@@ -137,7 +137,7 @@ services:
       - "web:3000"
       - "--url=preferably-upright-walleye.ngrok-free.app"
     environment:
-      NGROK_AUTHTOKEN: 2vYjT5j40edREjK6Qbpysfr5TyK_4qhEj643Y4rxNCHoM1wPo
+      NGROK_AUTHTOKEN: 3AIGcxNZtsPYxjElupoEslKnvhC_2HFuMGAkk36xRE2wT8U4z
     networks:
       - fotff
 
