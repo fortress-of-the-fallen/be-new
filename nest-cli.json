@@ -10,6 +10,6 @@
             "watchAssets": true
          }
       ],
-      "deleteOutDir": false
+      "deleteOutDir": true
    }
 }
