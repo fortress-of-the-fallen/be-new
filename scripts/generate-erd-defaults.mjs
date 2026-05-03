@@ -6,6 +6,7 @@ const schemaPath = path.resolve('prisma/schema.prisma');
 const outMmd = path.resolve('prisma/ERD-defaults.mmd');
 const outSvg = path.resolve('prisma/ERD-defaults.svg');
 const tmpConfig = path.resolve('prisma/.mermaid-defaults-config.json');
+const tmpPuppeteerConfig = path.resolve('prisma/.puppeteer-defaults-config.json');
 
 const raw = fs.readFileSync(schemaPath, 'utf8');
 const lines = raw.split(/\r?\n/);
@@ -172,11 +173,18 @@ const mermaidConfig = {
   er: { useMaxWidth: true },
 };
 fs.writeFileSync(tmpConfig, JSON.stringify(mermaidConfig));
+fs.writeFileSync(
+  tmpPuppeteerConfig,
+  JSON.stringify({
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  }),
+);
 
 const mmdcPath = path.resolve('node_modules/.bin/mmdc');
-execSync(`"${mmdcPath}" -i "${outMmd}" -o "${outSvg}" -c "${tmpConfig}"`, {
+execSync(`"${mmdcPath}" -i "${outMmd}" -o "${outSvg}" -c "${tmpConfig}" -p "${tmpPuppeteerConfig}"`, {
   stdio: 'inherit',
 });
 
 fs.unlinkSync(tmpConfig);
+fs.unlinkSync(tmpPuppeteerConfig);
 console.log(`Generated: ${outSvg}`);

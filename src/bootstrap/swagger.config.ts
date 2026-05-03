@@ -11,13 +11,16 @@ export async function setupSwagger(app: INestApplication): Promise<void> {
          await convertMarkdownToHtml(join(process.cwd(), ConfigKeyConstant.SwaggerDescriptionPath)),
       )
       .setVersion('1.0')
-      .addApiKey(
+      .addBearerAuth(
          {
-            type: 'apiKey',
-            name: 'session-id',
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            name: 'Authorization',
+            description: 'Bearer access token',
             in: 'header',
          },
-         'session',
+         'access-token',
       )
       .build();
 
@@ -52,6 +55,28 @@ export async function setupSwagger(app: INestApplication): Promise<void> {
          customSiteTitle: 'Swagger Docs - Character',
       },
    );
+
+   const featureTags = [
+      'Player',
+      'Inventory',
+      'Formation',
+      'Quest',
+      'Battle',
+      'Leaderboard',
+      'Config',
+   ];
+
+   for (const tag of featureTags) {
+      SwaggerModule.setup(
+         `swagger/${tag.toLowerCase()}`,
+         app,
+         filterDocumentByTags(document, [tag]),
+         {
+            ...swaggerUiOptions,
+            customSiteTitle: `Swagger Docs - ${tag}`,
+         },
+      );
+   }
 }
 
 function filterDocumentByTags(document: OpenAPIObject, allowedTags: string[]): OpenAPIObject {

@@ -8,6 +8,14 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { CharacterModule } from 'src/features/character/character.module';
 import { SeedingModule } from './persistence/seeding/seeding.module';
+import { PersistenceModule } from './persistence/persistence.module';
+import { PlayerModule } from 'src/features/player/player.module';
+import { ConfigModule } from 'src/features/config/config.module';
+import { LeaderboardModule } from 'src/features/leaderboard/leaderboard.module';
+import { FormationModule } from 'src/features/formation/formation.module';
+import { QuestModule } from 'src/features/quest/quest.module';
+import { InventoryModule } from 'src/features/inventory/inventory.module';
+import { BattleModule } from 'src/features/battle/battle.module';
 
 const dependencies = [
    CacheModule,
@@ -16,9 +24,17 @@ const dependencies = [
    BackgroundHandlerModule,
    BroadcastModule,
    PrismaModule,
+   PersistenceModule,
    SeedingModule,
    AuthModule,
    CharacterModule,
+   PlayerModule,
+   ConfigModule,
+   LeaderboardModule,
+   FormationModule,
+   QuestModule,
+   InventoryModule,
+   BattleModule,
 ];
 
 @Module({

@@ -2,32 +2,192 @@
 //// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 //// ------------------------------------------------------
 
-Table users {
+Table accounts {
   id String [pk]
-  name String
-  username String [unique]
-  email String [unique]
-  password String
+  username String [unique, not null]
+  password String [not null]
+  playerId String
+  status String [not null, default: 'active']
   role String[] [not null]
   maxSession Int [not null, default: 5]
   max_game_user Int [not null, default: 3]
-  isDeleted Boolean [not null, default: false]
-  isLocked Boolean [not null, default: false]
-  sessions sessions [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  lastLoginAt DateTime
+  sessions refresh_tokens [not null]
   characters characters [not null]
+  player players
 }
 
-Table sessions {
+Table refresh_tokens {
   id String [pk]
   user String [not null]
-  createdAt DateTime [default: `now()`, not null]
+  playerId String [not null]
+  tokenHash String [unique, not null]
   expiresAt DateTime [not null]
-  isRevoked Boolean [not null, default: false]
+  revokedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
   userAgent String
   ipAddress String
-  isDeleted Boolean [not null, default: false]
-  isLocked Boolean [not null, default: false]
-  account users [not null]
+  account accounts [not null]
+}
+
+Table players {
+  id String [pk]
+  accountId String [unique, not null]
+  profile Json [not null]
+  statistics Json [not null]
+  currency Json [not null]
+  configVersion String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  account accounts [not null]
+  inventoryItems player_inventory_items [not null]
+  formations player_formations [not null]
+  quests player_quests [not null]
+  questProgressRewards player_quest_progress_rewards [not null]
+  battleSessions battle_sessions [not null]
+  rewardTransactions reward_transactions [not null]
+  leaderboardScores leaderboard_scores [not null]
+  idempotencyRecords idempotency_records [not null]
+}
+
+Table player_inventory_items {
+  id String [pk]
+  playerId String [not null]
+  itemId String [not null]
+  itemType String [not null]
+  itemClass String
+  remainingUses Int [not null, default: 0]
+  customData Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  player players [not null]
+}
+
+Table player_formations {
+  id String [pk]
+  playerId String [not null]
+  name String [not null]
+  slots Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  player players [not null]
+
+  indexes {
+    (playerId, name) [unique]
+  }
+}
+
+Table player_quests {
+  id String [pk]
+  playerId String [not null]
+  questId Int [not null]
+  type String [not null]
+  actionId String [not null]
+  progress Int [not null]
+  required Int [not null]
+  claimed Boolean [not null, default: false]
+  periodKey String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  player players [not null]
+
+  indexes {
+    (playerId, questId, periodKey) [unique]
+  }
+}
+
+Table player_quest_progress_rewards {
+  id String [pk]
+  playerId String [not null]
+  track String [not null]
+  stage Int [not null]
+  points Int [not null]
+  periodKey String [not null]
+  reward Json [not null]
+  claimed Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  player players [not null]
+
+  indexes {
+    (playerId, track, stage, periodKey) [unique]
+  }
+}
+
+Table battle_sessions {
+  id String [pk]
+  playerId String [not null]
+  opponentPlayerId String
+  mode String [not null]
+  seed Int [not null]
+  status String [not null]
+  startedAt DateTime [not null]
+  expiresAt DateTime [not null]
+  finishedAt DateTime
+  result String
+  summary Json
+  rewards Json
+  configVersion String [not null]
+  player players [not null]
+}
+
+Table reward_transactions {
+  id String [pk]
+  playerId String [not null]
+  sourceType String [not null]
+  sourceId String [not null]
+  idempotencyKey String
+  changes Json [not null]
+  balanceAfter Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+  player players [not null]
+}
+
+Table leaderboard_scores {
+  id String [pk]
+  playerId String [not null]
+  type String [not null]
+  score Int [not null]
+  displayName String [not null]
+  avatar String [not null]
+  country String
+  updatedAt DateTime [not null]
+  player players [not null]
+
+  indexes {
+    (playerId, type) [unique]
+  }
+}
+
+Table configs {
+  id String [pk]
+  name String [not null]
+  version String [not null]
+  isActive Boolean [not null, default: false]
+  records Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+  activatedAt DateTime
+
+  indexes {
+    (name, version) [unique]
+  }
+}
+
+Table idempotency_records {
+  id String [pk]
+  playerId String [not null]
+  idempotencyKey String [not null]
+  action String [not null]
+  requestHash String [not null]
+  response Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+  player players [not null]
+
+  indexes {
+    (playerId, idempotencyKey) [unique]
+  }
 }
 
 Table characters {
@@ -38,7 +198,7 @@ Table characters {
   userId String [not null]
   isDeleted Boolean [not null, default: false]
   isLocked Boolean [not null, default: false]
-  user users [not null]
+  user accounts [not null]
   appearance character_appearances
   stats character_stats
 }
@@ -89,9 +249,27 @@ Table backups {
   isLocked Boolean [not null, default: false]
 }
 
-Ref: sessions.user > users.id
+Ref: refresh_tokens.user > accounts.id
 
-Ref: characters.userId > users.id
+Ref: players.accountId - accounts.id
+
+Ref: player_inventory_items.playerId > players.id
+
+Ref: player_formations.playerId > players.id
+
+Ref: player_quests.playerId > players.id
+
+Ref: player_quest_progress_rewards.playerId > players.id
+
+Ref: battle_sessions.playerId > players.id
+
+Ref: reward_transactions.playerId > players.id
+
+Ref: leaderboard_scores.playerId > players.id
+
+Ref: idempotency_records.playerId > players.id
+
+Ref: characters.userId > accounts.id
 
 Ref: character_appearances.characterId - characters.id
 

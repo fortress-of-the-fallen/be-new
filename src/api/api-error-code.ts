@@ -1,0 +1,15 @@
+export enum ApiErrorCode {
+   Unauthorized = 'UNAUTHORIZED',
+   Forbidden = 'FORBIDDEN',
+   ValidationFailed = 'VALIDATION_FAILED',
+   NotFound = 'NOT_FOUND',
+   UsernameTaken = 'USERNAME_TAKEN',
+   InvalidCredentials = 'INVALID_CREDENTIALS',
+   InsufficientResource = 'INSUFFICIENT_RESOURCE',
+   AlreadyClaimed = 'ALREADY_CLAIMED',
+   ConfigMismatch = 'CONFIG_MISMATCH',
+   BattleExpired = 'BATTLE_EXPIRED',
+   BattleAlreadyFinished = 'BATTLE_ALREADY_FINISHED',
+   IdempotencyConflict = 'IDEMPOTENCY_CONFLICT',
+   InternalServerError = 'INTERNAL_SERVER_ERROR',
+}

@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
+import { SessionContextService } from 'src/infrastructure/persistence/session-context.service';
 import { CharacterControllerMessage } from '../character-controller.message';
 import { calculateDerivedStats } from '../stats';
 import { UpdateCharacterBaseAttributesDto } from './update-character-base-attributes.dto';
 
 @Injectable()
 export class UpdateCharacterBaseAttributesApplicationService {
-   constructor(private readonly prisma: PrismaService) {}
+   constructor(
+      private readonly prisma: PrismaService,
+      private readonly sessionContextService: SessionContextService,
+   ) {}
 
    async updateBaseAttributes(
       characterId: string,
@@ -96,27 +100,6 @@ export class UpdateCharacterBaseAttributesApplicationService {
    }
 
    private async resolveUserIdBySession(sessionId?: string): Promise<string | null> {
-      if (!sessionId) {
-         return null;
-      }
-
-      const session = await this.prisma.session.findFirst({
-         where: {
-            id: sessionId,
-            isRevoked: false,
-            expiresAt: {
-               gt: new Date(),
-            },
-         },
-         select: {
-            user: true,
-         },
-      });
-
-      if (!session || !session.user) {
-         return null;
-      }
-
-      return session.user as string;
+      return this.sessionContextService.resolveUserId(sessionId);
    }
 }

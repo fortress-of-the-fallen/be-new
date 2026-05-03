@@ -1,5 +1,5 @@
-import { Body, Delete, Get, Headers, Param, Patch, Post } from '@nestjs/common';
-import { ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Body, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiErrorMessages } from 'src/shared/decorator/api-error-message.decorator';
 import { CharacterControllerMessage } from 'src/features/character/application/character-controller.message';
 import { Controllers } from 'src/shared/decorator/controller.decorator';
@@ -18,19 +18,17 @@ import {
    CreateCharacterDto,
    UpdateCharacterBaseAttributesDto,
 } from 'src/features/character/application';
+import { extractRequestToken } from 'src/shared/helper/request-auth.helper';
+import { Request } from 'express';
 
 @ApiTags('Character')
-@Controllers({ path: 'api/character', version: '1' })
+@Controllers({ path: 'character', version: '1' })
 export class CharacterController {
    constructor(private readonly characterApplicationService: CharacterApplicationService) {}
 
    @Post()
    @ApiOperation({ summary: 'Create character' })
-   @ApiHeader({
-      name: 'session-id',
-      description: 'Session ID for the user',
-      required: true,
-   })
+   @ApiBearerAuth('access-token')
    @ApiOkResponse({
       type: ResultRes<string>,
       description: 'Returns created character ID',
@@ -40,10 +38,11 @@ export class CharacterController {
    @Roles(...AllRoles)
    async createCharacter(
       @Body() req: CreateCharacterReq,
-      @Headers('session-id') sessionId?: string,
+      @Req() request: Request,
    ): Promise<ResultRes<string>> {
       const response: ResultRes<string> = new ResultRes<string>();
       const reqDto = Object.assign(new CreateCharacterDto(), req);
+      const sessionId = extractRequestToken(request.headers as Record<string, unknown>);
 
       const [error, result]: [string, string] =
          await this.characterApplicationService.createCharacter(reqDto, sessionId);
@@ -60,11 +59,7 @@ export class CharacterController {
 
    @Get()
    @ApiOperation({ summary: 'Get list of characters for current user' })
-   @ApiHeader({
-      name: 'session-id',
-      description: 'Session ID for the user',
-      required: true,
-   })
+   @ApiBearerAuth('access-token')
    @ApiOkResponse({
       type: ResultRes<CharacterRes[]>,
       description: 'Returns list of characters',
@@ -72,10 +67,9 @@ export class CharacterController {
    @ApiErrorMessages(CharacterControllerMessage.List)
    @RateLimit({ limit: 10, ttl: 60 })
    @Roles(...AllRoles)
-   async listCharacters(
-      @Headers('session-id') sessionId?: string,
-   ): Promise<ResultRes<CharacterRes[]>> {
+   async listCharacters(@Req() request: Request): Promise<ResultRes<CharacterRes[]>> {
       const response: ResultRes<CharacterRes[]> = new ResultRes<CharacterRes[]>();
+      const sessionId = extractRequestToken(request.headers as Record<string, unknown>);
 
       const [error, result]: [string, any[]] =
          await this.characterApplicationService.listCharacters(sessionId);
@@ -92,11 +86,7 @@ export class CharacterController {
 
    @Delete(':characterId')
    @ApiOperation({ summary: 'Delete character' })
-   @ApiHeader({
-      name: 'session-id',
-      description: 'Session ID for the user',
-      required: true,
-   })
+   @ApiBearerAuth('access-token')
    @ApiParam({
       name: 'characterId',
       required: true,
@@ -111,9 +101,10 @@ export class CharacterController {
    @Roles(...AllRoles)
    async deleteCharacter(
       @Param() req: DeleteCharacterReq,
-      @Headers('session-id') sessionId?: string,
+      @Req() request: Request,
    ): Promise<ExecutionRes> {
       const response: ExecutionRes = new ExecutionRes();
+      const sessionId = extractRequestToken(request.headers as Record<string, unknown>);
 
       const error: string = await this.characterApplicationService.deleteCharacter(
          req.characterId,
@@ -132,11 +123,7 @@ export class CharacterController {
 
    @Patch(':characterId/stats/base')
    @ApiOperation({ summary: 'Update base attributes of a character' })
-   @ApiHeader({
-      name: 'session-id',
-      description: 'Session ID for the user',
-      required: true,
-   })
+   @ApiBearerAuth('access-token')
    @ApiParam({
       name: 'characterId',
       required: true,
@@ -152,10 +139,11 @@ export class CharacterController {
    async updateBaseAttributes(
       @Param() req: DeleteCharacterReq,
       @Body() body: UpdateCharacterBaseAttributesReq,
-      @Headers('session-id') sessionId?: string,
+      @Req() request: Request,
    ): Promise<ResultRes<CharacterStatsRes>> {
       const response: ResultRes<CharacterStatsRes> = new ResultRes<CharacterStatsRes>();
       const reqDto = Object.assign(new UpdateCharacterBaseAttributesDto(), body);
+      const sessionId = extractRequestToken(request.headers as Record<string, unknown>);
 
       const [error, result] = await this.characterApplicationService.updateCharacterBaseAttributes(
          req.characterId,

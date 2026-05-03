@@ -1,28 +1,33 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 class RegisterReq {
    @IsNotEmpty()
-   @ApiProperty({ example: 'example' })
+   @IsString()
+   @MinLength(3)
+   @MaxLength(32)
+   @ApiProperty({ example: 'player01' })
    username: string;
 
-   @IsEmail()
-   @IsNotEmpty()
-   @ApiProperty({ example: 'example@email.com' })
-   email: string;
-
    @IsString()
    @IsNotEmpty()
-   @ApiProperty({ example: 'password123' })
+   @ApiProperty({ example: 'secret123' })
    @MinLength(8)
-   @MaxLength(20)
+   @MaxLength(64)
    password: string;
 
+   @IsOptional()
    @IsString()
-   @IsNotEmpty()
-   @ApiProperty({ example: 'password123' })
+   @ApiProperty({ example: 'secret123', required: false })
    @MinLength(8)
-   @MaxLength(20)
-   confirmPassword: string;
+   @MaxLength(64)
+   confirmPassword?: string;
+
+   @IsOptional()
+   @IsString()
+   @MinLength(1)
+   @MaxLength(32)
+   @ApiProperty({ example: 'Player01', required: false })
+   displayName?: string;
 }
 export { RegisterReq };

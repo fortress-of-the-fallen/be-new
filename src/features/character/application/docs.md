@@ -1,23 +1,55 @@
-# Character Feature Docs
+# Character Docs
 
-Tài liệu chức năng quản lý nhân vật.
+Tài liệu này mô tả implementation hiện tại của feature `character`.
+
+- Base path: `/api/v1/character`
+- Protected routes: yêu cầu `Authorization: Bearer <accessToken>`
+- Compatibility note: success response của feature này vẫn dùng envelope cũ `result/errorCode/timestamp`
+- Auth/guard errors vẫn dùng envelope lỗi mới `{ success, error, serverTime }`
+
+## Success Envelope Compatibility
+
+**Result response**
+
+```json
+{
+  "success": true,
+  "errorCode": "",
+  "error": "",
+  "timestamp": "2026-05-04T10:00:00.000Z",
+  "result": {}
+}
+```
+
+**Execution response**
+
+```json
+{
+  "success": true,
+  "errorCode": "",
+  "error": "",
+  "timestamp": "2026-05-04T10:00:00.000Z"
+}
+```
 
 ## Routes
 
 <details>
-<summary><strong>Create Character - <code>POST /v1/api/character</code></strong></summary>
+<summary><strong>Create Character - <code>POST /api/v1/character</code></strong></summary>
 
-Mô tả route: tạo nhân vật mới cho user hiện tại.
+**Mô tả route**
 
-**Headers / Authentication**
+Tạo character mới cho account hiện tại, đồng thời sinh appearance và stats mặc định.
 
-- `session-id: string` (bắt buộc)
+**Authentication**
+
+- Bắt buộc: `Authorization: Bearer <accessToken>`
 
 **Input Schema**
 
 ```json
 {
-  "character_name": "string",
+  "character_name": "MyCharacter",
   "gender": "male",
   "race": "human",
   "hair": "ShortWavy",
@@ -29,34 +61,37 @@ Mô tả route: tạo nhân vật mới cho user hiện tại.
 }
 ```
 
-**Output Schema (Success)**
+**Output Schema**
 
 ```json
 {
   "success": true,
   "errorCode": "",
+  "error": "",
+  "timestamp": "2026-05-04T10:00:00.000Z",
   "result": "character-id-string"
 }
 ```
 
 **Error Messages**
 
-| ErrorCode | Mô tả |
+| Error code | Mô tả |
 | --- | --- |
-| `Character.Create.UserNotFound` | Không tìm thấy user từ `session-id`. |
-| `Character.Create.MaxCharacterReached` | User đã đạt tối đa số nhân vật cho phép. |
-| `Character.Create.CharacterNameExists` | Tên nhân vật đã tồn tại với user hiện tại. |
-| `Character.Create.InvalidGender` | Giá trị `gender` không hợp lệ. |
-| `Base.Message.ValidationError` | Request sai schema hoặc thiếu field bắt buộc. |
+| `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
+| `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
+| `Character.Create.UserNotFound` | Token hợp lệ nhưng không resolve được user active. |
+| `Character.Create.MaxCharacterReached` | Đã đạt giới hạn character slot của account. |
+| `Character.Create.CharacterNameExists` | `character_name` đã tồn tại trong account hiện tại. |
+| `VALIDATION_FAILED` | Body sai schema, `gender` không hợp lệ, hoặc mã màu HEX không đúng. |
 
-**Sample Request (curl)**
+**Sample curl**
 
 ```bash
-curl -X POST 'http://127.0.0.1:3000/v1/api/character' \
+curl -X POST 'http://127.0.0.1:3000/api/v1/character' \
   -H 'content-type: application/json' \
-  -H 'session-id: <session-id>' \
+  -H 'Authorization: Bearer <access-token>' \
   -d '{
-    "character_name": "hero_1",
+    "character_name": "MyCharacter",
     "gender": "male",
     "race": "human",
     "hair": "ShortWavy",
@@ -71,28 +106,32 @@ curl -X POST 'http://127.0.0.1:3000/v1/api/character' \
 </details>
 
 <details>
-<summary><strong>List Characters - <code>GET /v1/api/character</code></strong></summary>
+<summary><strong>List Characters - <code>GET /api/v1/character</code></strong></summary>
 
-Mô tả route: lấy danh sách nhân vật của user hiện tại.
+**Mô tả route**
 
-**Headers / Authentication**
+Trả về toàn bộ character chưa bị xóa mềm của user hiện tại, kèm appearance và stats.
 
-- `session-id: string` (bắt buộc)
+**Authentication**
+
+- Bắt buộc: `Authorization: Bearer <accessToken>`
 
 **Input Schema**
 
 Không có body request.
 
-**Output Schema (Success)**
+**Output Schema**
 
 ```json
 {
   "success": true,
   "errorCode": "",
+  "error": "",
+  "timestamp": "2026-05-04T10:00:00.000Z",
   "result": [
     {
       "_id": "character-id-string",
-      "character_name": "hero_1",
+      "character_name": "MyCharacter",
       "race": "human",
       "gender": "male",
       "userId": "user-id-string",
@@ -133,34 +172,38 @@ Không có body request.
 
 **Error Messages**
 
-| ErrorCode | Mô tả |
+| Error code | Mô tả |
 | --- | --- |
-| `Character.List.UserNotFound` | Không tìm thấy user từ `session-id`. |
-| `Base.Message.Unauthorized` | Session không hợp lệ hoặc đã hết hạn. |
+| `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
+| `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
+| `Character.List.UserNotFound` | Token hợp lệ nhưng không resolve được user active. |
 
-**Sample Request (curl)**
+**Sample curl**
 
 ```bash
-curl -X GET 'http://127.0.0.1:3000/v1/api/character' \
-  -H 'session-id: <session-id>'
+curl -X GET 'http://127.0.0.1:3000/api/v1/character' \
+  -H 'Authorization: Bearer <access-token>'
 ```
 
 </details>
 
 <details>
-<summary><strong>Update Base Attributes - <code>PATCH /v1/api/character/:characterId/stats/base</code></strong></summary>
+<summary><strong>Update Base Attributes - <code>PATCH /api/v1/character/:characterId/stats/base</code></strong></summary>
 
-Mô tả route: cập nhật chỉ số cơ bản A của nhân vật và tự động tính lại chỉ số B.
+**Mô tả route**
 
-**Headers / Authentication**
+Cập nhật base attributes cho character, sau đó server tự tính lại toàn bộ derived stats.
 
-- `session-id: string` (bắt buộc)
+**Authentication**
+
+- Bắt buộc: `Authorization: Bearer <accessToken>`
 
 **Input Schema**
 
-- Path param:
-  - `characterId: string` (bắt buộc)
-- Body:
+Path param:
+- `characterId: string`
+
+Body:
 
 ```json
 {
@@ -173,17 +216,19 @@ Mô tả route: cập nhật chỉ số cơ bản A của nhân vật và tự �
 }
 ```
 
-Lưu ý:
-- Body cho phép gửi một phần field.
-- Mỗi field phải là số nguyên không âm.
-- Tổng điểm tăng thêm không được vượt `unspentPoints`.
+Ghi chú:
+- Có thể gửi partial body
+- Mỗi field phải là số nguyên không âm
+- Tổng điểm tăng thêm không được vượt `unspentPoints`
 
-**Output Schema (Success)**
+**Output Schema**
 
 ```json
 {
   "success": true,
   "errorCode": "",
+  "error": "",
+  "timestamp": "2026-05-04T10:00:00.000Z",
   "result": {
     "_id": "stats-id-string",
     "str": 10,
@@ -210,23 +255,25 @@ Lưu ý:
 
 **Error Messages**
 
-| ErrorCode | Mô tả |
+| Error code | Mô tả |
 | --- | --- |
+| `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
+| `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
 | `Character.UpdateBaseAttributes.CharacterIdRequired` | Thiếu `characterId` trong URL. |
-| `Character.UpdateBaseAttributes.UserNotFound` | Không tìm thấy user từ `session-id`. |
-| `Character.UpdateBaseAttributes.CharacterNotFound` | Character không tồn tại, đã bị xóa, hoặc không thuộc user hiện tại. |
-| `Character.UpdateBaseAttributes.StatsNotFound` | Character chưa có bản ghi stats (cần backfill dữ liệu cũ). |
-| `Character.UpdateBaseAttributes.NoAttributeToUpdate` | Body không có bất kỳ field chỉ số nào để cập nhật. |
-| `Character.UpdateBaseAttributes.InvalidAttributeValue` | Có field chỉ số âm hoặc không hợp lệ. |
+| `Character.UpdateBaseAttributes.UserNotFound` | Token hợp lệ nhưng không resolve được user active. |
+| `Character.UpdateBaseAttributes.CharacterNotFound` | Character không tồn tại, đã xóa, hoặc không thuộc user hiện tại. |
+| `Character.UpdateBaseAttributes.StatsNotFound` | Character chưa có stats record. |
+| `Character.UpdateBaseAttributes.NoAttributeToUpdate` | Body không có field nào để cập nhật. |
+| `Character.UpdateBaseAttributes.InvalidAttributeValue` | Có attribute âm hoặc không hợp lệ. |
 | `Character.UpdateBaseAttributes.InsufficientUnspentPoints` | Không đủ `unspentPoints` để tăng tổng điểm base. |
-| `Base.Message.ValidationError` | Request sai schema (ví dụ truyền sai kiểu dữ liệu). |
+| `VALIDATION_FAILED` | Body sai kiểu dữ liệu. |
 
-**Sample Request (curl)**
+**Sample curl**
 
 ```bash
-curl -X PATCH 'http://127.0.0.1:3000/v1/api/character/<character-id>/stats/base' \
+curl -X PATCH 'http://127.0.0.1:3000/api/v1/character/<character-id>/stats/base' \
   -H 'content-type: application/json' \
-  -H 'session-id: <session-id>' \
+  -H 'Authorization: Bearer <access-token>' \
   -d '{
     "str": 10,
     "con": 9
@@ -236,51 +283,56 @@ curl -X PATCH 'http://127.0.0.1:3000/v1/api/character/<character-id>/stats/base'
 </details>
 
 <details>
-<summary><strong>Delete Character - <code>DELETE /v1/api/character/:characterId</code></strong></summary>
+<summary><strong>Delete Character - <code>DELETE /api/v1/character/:characterId</code></strong></summary>
 
-Mô tả route: xóa mềm (soft delete) nhân vật của user hiện tại.
+**Mô tả route**
 
-**Headers / Authentication**
+Xóa mềm character hiện tại bằng cách set `isDeleted = true`.
 
-- `session-id: string` (bắt buộc)
+**Authentication**
+
+- Bắt buộc: `Authorization: Bearer <accessToken>`
 
 **Input Schema**
 
-- Path param:
-  - `characterId: string` (bắt buộc)
+Path param:
+- `characterId: string`
 
-**Output Schema (Success)**
+Không có body request.
+
+**Output Schema**
 
 ```json
 {
   "success": true,
   "errorCode": "",
   "error": "",
-  "timestamp": "2026-02-25T00:00:00.000Z"
+  "timestamp": "2026-05-04T10:00:00.000Z"
 }
 ```
 
 **Error Messages**
 
-| ErrorCode | Mô tả |
+| Error code | Mô tả |
 | --- | --- |
+| `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
+| `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
 | `Character.Delete.CharacterIdRequired` | Thiếu `characterId` trong URL. |
-| `Character.Delete.UserNotFound` | Không tìm thấy user từ `session-id`. |
-| `Character.Delete.CharacterNotFound` | Character không tồn tại, đã bị xóa, hoặc không thuộc user hiện tại. |
-| `Base.Message.Unauthorized` | Session không hợp lệ hoặc đã hết hạn. |
+| `Character.Delete.UserNotFound` | Token hợp lệ nhưng không resolve được user active. |
+| `Character.Delete.CharacterNotFound` | Character không tồn tại, đã xóa, hoặc không thuộc user hiện tại. |
 
-**Sample Request (curl)**
+**Sample curl**
 
 ```bash
-curl -X DELETE 'http://127.0.0.1:3000/v1/api/character/<character-id>' \
-  -H 'session-id: <session-id>'
+curl -X DELETE 'http://127.0.0.1:3000/api/v1/character/<character-id>' \
+  -H 'Authorization: Bearer <access-token>'
 ```
 
 </details>
 
 ## Quick Links
 
-- Character Docs Page: [/docs/character](/docs/character)
-- Swagger Character (API Call): [/swagger/character](/swagger/character)
 - API Portal: [/](/)
+- Swagger Character: [/swagger/character](/swagger/character)
 - Auth Docs: [/docs/auth](/docs/auth)
+- Player Docs: [/docs/player](/docs/player)

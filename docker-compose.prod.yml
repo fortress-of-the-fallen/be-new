@@ -149,9 +149,9 @@ services:
     command:
       - "http"
       - "web:3000"
-      - "--url=preferably-upright-walleye.ngrok-free.app"
+      - "--url=willed-unstamped-gothic.ngrok-free.dev"
     environment:
-      NGROK_AUTHTOKEN: 3AIGcxNZtsPYxjElupoEslKnvhC_2HFuMGAkk36xRE2wT8U4z
+      NGROK_AUTHTOKEN: 3CLwKc0t7PuGlzC5JGv2fUppZmp_4arrgh63vHW8HdPv3fS5P
     networks:
       - fotff
 

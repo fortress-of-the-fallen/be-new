@@ -19,47 +19,223 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid()) @map("_id")
-  name          String?
-  username      String?   @unique
-  email         String?   @unique
-  password      String?
-  role          String[]
-  maxSession    Int       @default(5)
-  max_game_user Int       @default(3)
-  isDeleted     Boolean   @default(false)
-  isLocked      Boolean   @default(false)
-  sessions      Session[]
-  characters    Character[]
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  username   String      @unique
+  password   String      @map("passwordHash")
+  playerId   String?
+  status     String      @default("active")
+  role       String[]
+  maxSession Int         @default(5)
+  max_game_user Int      @default(3)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  lastLoginAt DateTime?
+  sessions   Session[]
+  characters Character[]
+  player     Player?     @relation("AccountPlayer")
 
-  @@map("users")
+  @@map("accounts")
 }
 
 model Session {
-  id        String   @id @map("_id")
-  user      String
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  isRevoked Boolean  @default(false)
-  userAgent String?
-  ipAddress String?
-  isDeleted Boolean  @default(false)
-  isLocked  Boolean  @default(false)
-  account   User     @relation(fields: [user], references: [id])
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  user       String   @map("accountId") @db.ObjectId
+  playerId   String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  userAgent  String?
+  ipAddress  String?  @map("ip")
+  account    User     @relation(fields: [user], references: [id])
 
   @@index([user])
-  @@map("sessions")
+  @@index([playerId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Player {
+  id            String               @id @map("_id")
+  accountId     String               @unique @db.ObjectId
+  profile       Json
+  statistics    Json
+  currency      Json
+  configVersion String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  account       User                 @relation("AccountPlayer", fields: [accountId], references: [id])
+  inventoryItems PlayerInventoryItem[]
+  formations    PlayerFormation[]
+  quests        PlayerQuest[]
+  questProgressRewards PlayerQuestProgressReward[]
+  battleSessions BattleSession[]
+  rewardTransactions RewardTransaction[]
+  leaderboardScores LeaderboardScore[]
+  idempotencyRecords IdempotencyRecord[]
+
+  @@map("players")
+}
+
+model PlayerInventoryItem {
+  id            String   @id @map("_id")
+  playerId      String
+  itemId        String
+  itemType      String
+  itemClass     String?
+  remainingUses Int      @default(0)
+  customData    Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  player        Player   @relation(fields: [playerId], references: [id])
+
+  @@index([playerId, itemType])
+  @@index([playerId, itemId])
+  @@map("player_inventory_items")
+}
+
+model PlayerFormation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId  String
+  name      String
+  slots     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  player    Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, name])
+  @@map("player_formations")
+}
+
+model PlayerQuest {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId  String
+  questId   Int
+  type      String
+  actionId  String
+  progress  Int
+  required  Int
+  claimed   Boolean  @default(false)
+  periodKey String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  player    Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, questId, periodKey])
+  @@index([playerId, type, periodKey])
+  @@map("player_quests")
+}
+
+model PlayerQuestProgressReward {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId  String
+  track     String
+  stage     Int
+  points    Int
+  periodKey String
+  reward    Json
+  claimed   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  player    Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, track, stage, periodKey])
+  @@index([playerId, track, periodKey])
+  @@map("player_quest_progress_rewards")
+}
+
+model BattleSession {
+  id               String   @id @map("_id")
+  playerId         String
+  opponentPlayerId String?
+  mode             String
+  seed             Int
+  status           String
+  startedAt        DateTime
+  expiresAt        DateTime
+  finishedAt       DateTime?
+  result           String?
+  summary          Json?
+  rewards          Json?
+  configVersion    String
+  player           Player   @relation(fields: [playerId], references: [id])
+
+  @@index([playerId, startedAt])
+  @@index([status, expiresAt])
+  @@index([opponentPlayerId])
+  @@map("battle_sessions")
+}
+
+model RewardTransaction {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId       String
+  sourceType     String
+  sourceId       String
+  idempotencyKey String?
+  changes        Json
+  balanceAfter   Json
+  createdAt      DateTime @default(now())
+  player         Player   @relation(fields: [playerId], references: [id])
+
+  @@index([playerId, createdAt])
+  @@index([sourceType, sourceId])
+  @@map("reward_transactions")
+}
+
+model LeaderboardScore {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId    String
+  type        String
+  score       Int
+  displayName String
+  avatar      String
+  country     String?
+  updatedAt   DateTime @updatedAt
+  player      Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, type])
+  @@index([type, score])
+  @@map("leaderboard_scores")
+}
+
+model Config {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  version    String
+  isActive   Boolean  @default(false)
+  records    Json
+  createdAt  DateTime @default(now())
+  activatedAt DateTime?
+
+  @@unique([name, version])
+  @@index([name, isActive])
+  @@map("configs")
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId       String
+  idempotencyKey String
+  action         String
+  requestHash    String
+  response       Json
+  createdAt      DateTime @default(now())
+  player         Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, idempotencyKey])
+  @@index([playerId, createdAt])
+  @@map("idempotency_records")
 }
 
 model Character {
-  id             String   @id @map("_id")
+  id             String               @id @map("_id")
   character_name String
   race           String
   gender         String
-  userId         String
-  isDeleted      Boolean  @default(false)
-  isLocked       Boolean  @default(false)
-  user           User     @relation(fields: [userId], references: [id])
+  userId         String               @db.ObjectId
+  isDeleted      Boolean              @default(false)
+  isLocked       Boolean              @default(false)
+  user           User                 @relation(fields: [userId], references: [id])
   appearance     CharacterAppearance?
   stats          CharacterStats?
 
@@ -68,61 +244,42 @@ model Character {
 }
 
 model CharacterAppearance {
-  id         String    @id @default(uuid()) @map("_id")
-  characterId String   @unique
-  hair       String
-  beard      String
-  eye        String
-  hairColor  String
-  beardColor String
-  eyeColor   String
-  character  Character @relation(fields: [characterId], references: [id])
+  id          String    @id @default(uuid()) @map("_id")
+  characterId String    @unique
+  hair        String
+  beard       String
+  eye         String
+  hairColor   String
+  beardColor  String
+  eyeColor    String
+  character   Character @relation(fields: [characterId], references: [id])
 
   @@map("character_appearances")
 }
 
 model CharacterStats {
-  id            String    @id @default(uuid()) @map("_id")
-  /// FK character (1-1)
-  characterId    String   @unique
-  /// Base Attribute: Strength
-  str           Int
-  /// Base Attribute: Dexterity
-  dex           Int
-  /// Base Attribute: Constitution
-  con           Int
-  /// Base Attribute: Intelligence
-  int           Int
-  /// Base Attribute: Wisdom
-  wis           Int
-  /// Base Attribute: Charisma
-  cha           Int
-  /// Stat points chưa phân bổ
-  unspentPoints Int       @default(0)
-  /// Derived: Max HP
-  hp            Int
-  /// Derived: Max MP
-  mp            Int
-  /// Derived: Physical Attack
-  patk          Int
-  /// Derived: Physical Defense
-  datk          Int
-  /// Derived: Magic Attack
-  matk          Int
-  /// Derived: Magic Defense
-  mdef          Int
-  /// Derived: Speed
-  spd           Int
-  /// Derived: Critical Rate
-  crit          Int
-  /// Derived: Accuracy
-  acc           Int
-  /// Derived: Evasion
-  eva           Int
-  /// Version công thức tính derived stats
-  formulaVersion Int      @default(1)
-  updatedAt     DateTime  @updatedAt
-  character     Character @relation(fields: [characterId], references: [id])
+  id             String    @id @default(uuid()) @map("_id")
+  characterId     String    @unique
+  str            Int
+  dex            Int
+  con            Int
+  int            Int
+  wis            Int
+  cha            Int
+  unspentPoints  Int       @default(0)
+  hp             Int
+  mp             Int
+  patk           Int
+  datk           Int
+  matk           Int
+  mdef           Int
+  spd            Int
+  crit           Int
+  acc            Int
+  eva            Int
+  formulaVersion Int       @default(1)
+  updatedAt      DateTime  @updatedAt
+  character      Character @relation(fields: [characterId], references: [id])
 
   @@map("character_stats")
 }

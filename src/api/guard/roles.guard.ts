@@ -4,27 +4,18 @@ import {
    ExecutionContext,
    ForbiddenException,
    UnauthorizedException,
-   Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from 'src/shared/constant/roles.constant';
 import { RoleBase } from 'src/features/auth/application/role-base.enum';
-import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
-import Redis from 'ioredis';
-
-type CachedAuthSession = {
-   userId: string;
-   roles: RoleBase[];
-};
+import { SessionContextService } from 'src/infrastructure/persistence/session-context.service';
+import { extractRequestToken } from 'src/shared/helper/request-auth.helper';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
    constructor(
       private reflector: Reflector,
-
-      private readonly prisma: PrismaService,
-
-      @Inject('REDIS_CLIENT') private readonly redis: Redis,
+      private readonly sessionContextService: SessionContextService,
    ) {}
 
    async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -38,49 +29,21 @@ export class RolesGuard implements CanActivate {
       }
 
       const request = context.switchToHttp().getRequest();
-      const rawSessionId = request.headers['session-id'];
-      const sessionId = typeof rawSessionId === 'string' ? rawSessionId : undefined;
+      const sessionId = extractRequestToken(request.headers as Record<string, unknown>);
 
       if (!sessionId) {
          throw new UnauthorizedException('Unauthorized');
       }
 
-      const cachedSession = await this.redis.get(sessionId);
-      let session = cachedSession ? (JSON.parse(cachedSession) as CachedAuthSession) : null;
-      if (!session || !session.roles || session.roles.length === 0) {
-         const dbSession = await this.prisma.session.findFirst({
-            where: {
-               id: sessionId,
-               isRevoked: false,
-               expiresAt: {
-                  gt: new Date(),
-               },
-            },
-            include: {
-               account: {
-                  select: {
-                     id: true,
-                     role: true,
-                  },
-               },
-            },
-         });
-
-         if (!dbSession || !dbSession.account) {
-            throw new ForbiddenException('Session not found');
-         }
-
-         session = {
-            userId: dbSession.account.id as string,
-            roles: (dbSession.account.role as RoleBase[]) ?? [],
-         };
-         await this.redis.set(sessionId, JSON.stringify(session), 'EX', 15 * 60);
+      const authContext = await this.sessionContextService.resolveAuthContext(sessionId);
+      if (!authContext) {
+         throw new UnauthorizedException('Unauthorized');
       }
 
-      const matched = requiredRoles.some(role => session.roles.includes(role));
+      const matched = requiredRoles.some(role => authContext.roles.includes(role));
       if (!matched) throw new ForbiddenException('Access denied');
 
-      await this.redis.expire(sessionId, 15 * 60);
+      request.authContext = authContext;
       return true;
    }
 }

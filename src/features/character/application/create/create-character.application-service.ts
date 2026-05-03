@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { IdentityHelper } from 'src/shared/helper/identity.helper';
+import { SessionContextService } from 'src/infrastructure/persistence/session-context.service';
 import { CharacterControllerMessage } from '../character-controller.message';
 import { CreateCharacterDto } from './create-character.dto';
 import {
@@ -11,7 +12,10 @@ import {
 
 @Injectable()
 export class CreateCharacterApplicationService {
-   constructor(private readonly prisma: PrismaService) {}
+   constructor(
+      private readonly prisma: PrismaService,
+      private readonly sessionContextService: SessionContextService,
+   ) {}
 
    async createCharacter(reqDto: CreateCharacterDto, sessionId?: string): Promise<[string, string]> {
       const userId = await this.resolveUserIdBySession(sessionId);
@@ -22,8 +26,7 @@ export class CreateCharacterApplicationService {
       const currentUser = await this.prisma.user.findFirst({
          where: {
             id: userId,
-            isDeleted: false,
-            isLocked: false,
+            status: 'active',
          },
       });
       if (!currentUser) {
@@ -92,27 +95,6 @@ export class CreateCharacterApplicationService {
    }
 
    private async resolveUserIdBySession(sessionId?: string): Promise<string | null> {
-      if (!sessionId) {
-         return null;
-      }
-
-      const session = await this.prisma.session.findFirst({
-         where: {
-            id: sessionId,
-            isRevoked: false,
-            expiresAt: {
-               gt: new Date(),
-            },
-         },
-         select: {
-            user: true,
-         },
-      });
-
-      if (!session || !session.user) {
-         return null;
-      }
-
-      return session.user as string;
+      return this.sessionContextService.resolveUserId(sessionId);
    }
 }

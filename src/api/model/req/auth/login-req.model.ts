@@ -24,11 +24,11 @@ export class LoginReq {
    })
    rememberMe?: boolean;
 
-   @IsNotEmpty()
+   @IsOptional()
    @ApiProperty({
       example: 'sEnpxxIeymn-KuvBAAAB',
-      required: true,
+      required: false,
    })
    @IsString()
-   connectionId: string;
+   connectionId?: string;
 }

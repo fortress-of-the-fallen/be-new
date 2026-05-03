@@ -4,18 +4,16 @@ import {
    ExceptionFilter,
    HttpException,
    HttpStatus,
-   Logger,
 } from '@nestjs/common';
-import { ExecutionRes } from '../model/res/base/execution-res.model';
 import { Response } from 'express';
+import { ApiErrorCode } from 'src/api/api-error-code';
+import { buildErrorResponse } from '../model/res/base/api-envelope.model';
 import { HttpExceptionFilter } from './http-exception.filter';
 import { ReqValidateFilter } from './req-validate.filter';
 import { ValidateException } from 'src/shared/exception/validate-exception';
 
 @Catch(Error)
 export class AllExceptionFilter implements ExceptionFilter {
-   private readonly logger = new Logger(AllExceptionFilter.name);
-
    constructor(
       private readonly httpFilter: HttpExceptionFilter,
       private readonly reqValidationFilter: ReqValidateFilter,
@@ -34,13 +32,13 @@ export class AllExceptionFilter implements ExceptionFilter {
 
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
-
-      const res: ExecutionRes = new ExecutionRes();
-      res.success = false;
-      res.error = 'An unexpected error occurred';
-
-      this.logger.error('Unhandled exception:', exception.message);
-
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(res);
+      response
+         .status(HttpStatus.INTERNAL_SERVER_ERROR)
+         .json(
+            buildErrorResponse(
+               ApiErrorCode.InternalServerError,
+               exception.message || 'Unexpected server error',
+            ),
+         );
    }
 }

@@ -4,26 +4,21 @@ import {
    ExceptionFilter,
    HttpException,
    HttpStatus,
-   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { BaseMessage } from 'src/api/base.message';
-import { ExecutionRes } from '../model/res/base/execution-res.model';
+import { ApiErrorCode } from 'src/api/api-error-code';
+import { buildErrorResponse } from '../model/res/base/api-envelope.model';
 
 @Catch(HttpException)
 class HttpExceptionFilter implements ExceptionFilter {
-   private readonly logger = new Logger(HttpExceptionFilter.name);
-
    catch(exception: HttpException, host: ArgumentsHost) {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
 
-      const res: ExecutionRes = new ExecutionRes();
-      res.success = false;
-
       let status = HttpStatus.INTERNAL_SERVER_ERROR;
-      let errorMessage = 'An internal error occurred';
-      let errorCode = BaseMessage.EXCEPTION;
+      let errorCode = ApiErrorCode.InternalServerError;
+      let errorMessage = 'Unexpected server error';
+      let errorDetails: unknown = {};
 
       status = exception.getStatus?.() ?? HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -36,43 +31,44 @@ class HttpExceptionFilter implements ExceptionFilter {
          exceptionResponse !== null &&
          'message' in exceptionResponse
       ) {
-         this.logger.error('Exception response:', JSON.stringify(exceptionResponse));
          const messageObj = exceptionResponse as NestErrorResponse;
-         errorMessage = messageObj.message ?? errorMessage;
+         errorCode = messageObj.code ?? this.mapStatusToCode(status);
+         errorMessage =
+            typeof messageObj.message === 'string'
+               ? messageObj.message
+               : Array.isArray(messageObj.message)
+                 ? messageObj.message.join(', ')
+                 : errorMessage;
+         errorDetails = messageObj.details ?? {};
+      } else {
+         errorCode = this.mapStatusToCode(status);
       }
 
+      response.status(status).json(buildErrorResponse(errorCode, errorMessage, errorDetails));
+   }
+
+   private mapStatusToCode(status: number): ApiErrorCode {
       switch (status) {
          case HttpStatus.BAD_REQUEST:
-            errorCode = BaseMessage.BAD_REQUEST;
-            break;
-         case HttpStatus.TOO_MANY_REQUESTS:
-            errorCode = BaseMessage.TOO_MANY_REQUESTS;
-            break;
-         case HttpStatus.INTERNAL_SERVER_ERROR:
-            errorCode = BaseMessage.INTERNAL_SERVER_ERROR;
-            break;
+            return ApiErrorCode.ValidationFailed;
          case HttpStatus.UNAUTHORIZED:
-            errorCode = BaseMessage.UNAUTHORIZED;
-            break;
+            return ApiErrorCode.Unauthorized;
          case HttpStatus.FORBIDDEN:
-            errorCode = BaseMessage.FORBIDDEN;
-            break;
+            return ApiErrorCode.Forbidden;
+         case HttpStatus.NOT_FOUND:
+            return ApiErrorCode.NotFound;
          default:
-            errorCode = BaseMessage.EXCEPTION;
-            break;
+            return ApiErrorCode.InternalServerError;
       }
-
-      this.logger.error(`[HTTP Exception] ${JSON.stringify({ status, errorMessage })}`);
-
-      res.errorCode = errorCode;
-      response.status(status).json(res);
    }
 }
 
 interface NestErrorResponse {
-   statusCode?: number;
-   message?: string;
+   code?: ApiErrorCode;
+   details?: unknown;
    error?: string;
+   message?: string | string[];
+   statusCode?: number;
 }
 
 export { HttpExceptionFilter };

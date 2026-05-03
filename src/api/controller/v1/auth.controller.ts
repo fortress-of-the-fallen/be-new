@@ -1,20 +1,20 @@
-import { Body, Delete, Headers, Post, Req } from '@nestjs/common';
-import { ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Post, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthLoginDto } from 'src/features/auth/application/login';
 import { AuthRegisterDto } from 'src/features/auth/application/register';
 import { AuthApplicationService } from 'src/features/auth/application/auth.application-service';
-import { ApiErrorMessages } from 'src/shared/decorator/api-error-message.decorator';
-import { AuthControllerMessage } from 'src/features/auth/application/auth-controller.message';
 import { Controllers } from 'src/shared/decorator/controller.decorator';
 import { RateLimit } from 'src/shared/decorator/rate-limit.decorator';
 import { Roles } from 'src/shared/decorator/role.decorator';
 import { AllRoles } from 'src/features/auth/application/role-base.enum';
-import { isNullOrEmpty } from 'src/shared/helper/string.helper';
 import { LoginReq } from 'src/api/model/req/auth/login-req.model';
 import { RegisterReq } from 'src/api/model/req/auth/register-req.model';
-import { ExecutionRes } from 'src/api/model/res/base/execution-res.model';
-import { ResultRes } from 'src/api/model/res/base/result-res.model';
+import { RefreshReq } from 'src/api/model/req/auth/refresh-req.model';
+import { LogoutReq } from 'src/api/model/req/auth/logout-req.model';
+import { buildSuccessResponse } from 'src/api/model/res/base/api-envelope.model';
 import { Request } from 'express';
+import { CurrentAuth } from 'src/shared/decorator/current-auth.decorator';
+import { RequestAuthContext } from 'src/shared/services/auth/auth-context';
 
 @ApiTags('Auth')
 @Controllers({ path: 'auth', version: '1' })
@@ -24,80 +24,51 @@ export class AuthController {
    @Post('register')
    @ApiOperation({ summary: 'Register user' })
    @RateLimit({ limit: 5, ttl: 60 })
-   @ApiErrorMessages(AuthControllerMessage.Register)
    @ApiOkResponse({
-      type: ResultRes<string>,
-      description: 'Returns execution result',
+      description: 'Returns auth tokens and player info',
    })
-   async register(@Body() req: RegisterReq): Promise<ResultRes<string>> {
-      const response: ResultRes<string> = new ResultRes<string>();
+   async register(@Body() req: RegisterReq, @Req() request: Request) {
       const dto = Object.assign(new AuthRegisterDto(), req);
-
-      const [error, result]: [string, string] = await this.authApplicationService.register(dto);
-
-      if (!isNullOrEmpty(error)) {
-         response.success = false;
-         response.errorCode = error;
-         return response;
-      }
-
-      response.result = result;
-      return response;
+      return buildSuccessResponse(await this.authApplicationService.register(dto, request));
    }
 
    @Post('login')
    @ApiOperation({ summary: 'Login user' })
    @ApiOkResponse({
-      type: ResultRes<string>,
-      description: 'Returns execution result',
+      description: 'Returns auth tokens and player info',
    })
-   @ApiErrorMessages(AuthControllerMessage.Login)
    @RateLimit({ limit: 5, ttl: 60 })
-   async login(@Body() req: LoginReq, @Req() request: Request): Promise<ResultRes<string>> {
-      const response: ResultRes<string> = new ResultRes<string>();
+   async login(@Body() req: LoginReq, @Req() request: Request) {
       const dto = Object.assign(new AuthLoginDto(), req);
-
-      const [error, result]: [string, string] = await this.authApplicationService.login(
-         dto,
-         request,
-      );
-
-      if (!isNullOrEmpty(error)) {
-         response.success = false;
-         response.errorCode = error;
-         return response;
-      }
-
-      response.result = result;
-      return response;
+      return buildSuccessResponse(await this.authApplicationService.login(dto, request));
    }
 
-   @Delete('logout')
-   @ApiOperation({ summary: 'Logout user' })
-   @ApiHeader({
-      name: 'session-id',
-      description: 'Session ID for the user',
-      required: true,
-   })
+   @Post('refresh')
+   @ApiOperation({ summary: 'Refresh access token' })
    @ApiOkResponse({
-      type: ExecutionRes,
-      description: 'Returns execution result',
+      description: 'Returns a rotated access token pair',
    })
-   @ApiErrorMessages(AuthControllerMessage.Logout)
+   @RateLimit({ limit: 5, ttl: 60 })
+   async refresh(@Body() req: RefreshReq, @Req() request: Request) {
+      return buildSuccessResponse(
+         await this.authApplicationService.refresh(req.refreshToken, request),
+      );
+   }
+
+   @Post('logout')
+   @ApiOperation({ summary: 'Logout current session' })
+   @ApiBearerAuth('access-token')
+   @ApiOkResponse({
+      description: 'Revokes the current refresh session',
+   })
    @RateLimit({ limit: 5, ttl: 60 })
    @Roles(...AllRoles)
-   async logout(@Headers('session-id') sessionId?: string): Promise<ExecutionRes> {
-      const response: ExecutionRes = new ExecutionRes();
-
-      const error: string = await this.authApplicationService.logout(sessionId);
-
-      if (!isNullOrEmpty(error)) {
-         response.success = false;
-         response.errorCode = error;
-         return response;
-      }
-
-      response.success = true;
-      return response;
+   async logout(
+      @CurrentAuth() authContext: RequestAuthContext,
+      @Body() req: LogoutReq,
+   ) {
+      return buildSuccessResponse(
+         await this.authApplicationService.logout(authContext, req.refreshToken),
+      );
    }
 }

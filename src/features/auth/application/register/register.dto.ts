@@ -1,6 +1,6 @@
 export class AuthRegisterDto {
    username: string;
-   email: string;
    password: string;
-   confirmPassword: string;
+   confirmPassword?: string;
+   displayName?: string;
 }

@@ -1,79 +1,108 @@
 # API Documentation
 
-Welcome to API documentation. This document describes the available endpoints, request/response formats, and authentication methods.
+Tài liệu mô tả contract `/api/v1` hiện đang chạy trong backend.
 
-- ApiSpec: [link](/)
-- API Portal: [link](/)
-- Docs Auth: [link](/docs/auth)
-- Docs Character: [link](/docs/character)
-- Swagger All: [link](/swagger)
-- Swagger Auth: [link](/swagger/auth)
-- Swagger Character: [link](/swagger/character)
-- Env: [link](https://docs.google.com/spreadsheets/d/1gPHUbUbTPOIgvykkxbRK4BGK1JGbZBNVgmBMmJw6ItI/edit?usp=sharing)
+## Navigation
 
-# Broadcast Routes
+- API Portal: [/](/)
+- Swagger All: [/swagger](/swagger)
+- Swagger Auth: [/swagger/auth](/swagger/auth)
+- Swagger Character: [/swagger/character](/swagger/character)
+- Swagger Player: [/swagger/player](/swagger/player)
+- Swagger Inventory: [/swagger/inventory](/swagger/inventory)
+- Swagger Formation: [/swagger/formation](/swagger/formation)
+- Swagger Quest: [/swagger/quest](/swagger/quest)
+- Swagger Battle: [/swagger/battle](/swagger/battle)
+- Swagger Leaderboard: [/swagger/leaderboard](/swagger/leaderboard)
+- Swagger Config: [/swagger/config](/swagger/config)
 
-## BaseHub
+## Authentication
 
-- Event `getConnectionId` → returns the client's connection ID.
-- Message → receives all server notifications via the `'message'` event.
-- All messages follow the `BroadcastMessage` structure:
-   - `event`: the name of the event, indicating the type of message.
-   - `data`: the payload associated with the event.
+- Protected endpoints dùng `Authorization: Bearer <accessToken>`
+- `register`, `login`, `refresh` là public
+- `configs` là public
+- `logout` cần cả bearer token và `refreshToken` trong body
 
-## /login
+## Response Envelopes
 
-- Namespace: `/login`
-- Events:
-   - `getConnectionId` → returns the client's connection ID.
-- Message → receives notifications from the server for actions like login or test events.
-- All messages follow the `BroadcastMessage` structure:
-   - `event`: the name of the event.
-   - `data`: the payload associated with the event.
-      - For login messages, `data` includes:
-         - `userId`: the ID of the user.
+### Standard Success
 
-# Error Handling
+```json
+{
+  "success": true,
+  "data": {},
+  "serverTime": "2026-05-04T10:00:00.000Z"
+}
+```
 
-## Base Error
+### Standard Error
 
-| ErrorCode                        | Description                                                |
-| -------------------------------- | ---------------------------------------------------------- |
-| Base.Message.Exception           | Base error, check server log for more details              |
-| Base.Message.TooManyRequests     | The client has sent too many requests in a short time      |
-| Base.Message.BadRequest          | The request is invalid or malformed                        |
-| Base.Message.InternalServerError | Unexpected server error occurred                           |
-| Base.Message.Unauthorized        | The client is not authenticated                            |
-| Base.Message.Forbidden           | The client does not have permission to access the resource |
-| Base.Message.ValidationError     | Validation failed for request parameters or data           |
-| Base.Message.MissingUserAgent    | Required User-Agent header is missing                      |
-| Base.Message.InvalidHeader       | One or more headers in the request are invalid             |
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "details": {}
+  },
+  "serverTime": "2026-05-04T10:00:00.000Z"
+}
+```
 
-## Auth Error
+### Character Compatibility Success
 
-| ErrorCode                        | Description                                                  |
-| -------------------------------- | ------------------------------------------------------------ |
-| Auth.Register.PasswordMismatch   | Password and confirm password do not match                   |
-| Auth.Register.UsernameExists     | Username is already registered                               |
-| Auth.Register.EmailExists        | Email is already registered                                  |
-| Auth.Login.UserNotFound          | No user account was found for the provided identity          |
-| Auth.Login.InvalidCredentials    | Username or password is incorrect                            |
-| Auth.Login.MaxSessionReached     | Maximum concurrent sessions has been reached                 |
-| Auth.Login.ClientNotConnected    | Login broadcast client is not connected                      |
-| Auth.Logout.SessionIdRequired    | The `session-id` header is required for logout               |
-| Auth.Logout.UserNotFound         | User account for the current session was not found           |
-| Auth.Logout.SessionNotFound      | The provided `session-id` does not match any active session  |
+```json
+{
+  "success": true,
+  "errorCode": "",
+  "error": "",
+  "timestamp": "2026-05-04T10:00:00.000Z",
+  "result": {}
+}
+```
 
-## Character Error
+Ghi chú:
+- Hầu hết feature mới đã chuyển sang `data/serverTime`
+- `character` vẫn dùng compatibility success envelope để tránh phá flow cũ
+- Các lỗi auth/guard ở `character` vẫn đi qua global error envelope mới
 
-| ErrorCode                           | Description                                               |
-| ----------------------------------- | --------------------------------------------------------- |
-| Character.Create.CharacterNameExists| Character name already exists for current user            |
-| Character.Create.InvalidGender      | Gender value is invalid                                   |
-| Character.Create.UserNotFound       | User account for the current session was not found        |
-| Character.Create.MaxCharacterReached| Character slot limit has been reached for this user       |
-| Character.List.UserNotFound         | User account for the current session was not found        |
+## Common Error Codes
 
-# Conclusion
+| Error code | Ý nghĩa |
+| --- | --- |
+| `UNAUTHORIZED` | Thiếu token, token sai format, token hết hạn, hoặc refresh token không hợp lệ. |
+| `FORBIDDEN` | Token hợp lệ nhưng role không được phép gọi route. |
+| `VALIDATION_FAILED` | Body/query/path sai schema hoặc rule validation thất bại. |
+| `NOT_FOUND` | Không tìm thấy resource, config, battle, formation, player, hero, skill hoặc leaderboard row. |
+| `USERNAME_TAKEN` | Username đã được đăng ký. |
+| `INVALID_CREDENTIALS` | Sai username/password hoặc account không active. |
+| `INSUFFICIENT_RESOURCE` | Không đủ gold/gem/shard hoặc thiếu duplicate copies. |
+| `ALREADY_CLAIMED` | Quest reward hoặc progress reward đã được claim. |
+| `CONFIG_MISMATCH` | `configVersion` client không khớp active version trên server. |
+| `BATTLE_EXPIRED` | Battle session đã quá hạn finish/claim reward. |
+| `BATTLE_ALREADY_FINISHED` | Battle session đã được finish trước đó. |
+| `IDEMPOTENCY_CONFLICT` | Cùng `idempotencyKey` nhưng payload khác request trước. |
+| `INTERNAL_SERVER_ERROR` | Lỗi ngoài ý muốn trên server. |
 
-- For more details, refer to the full API reference.
+## Operational Notes
+
+- Access token TTL hiện tại: 15 phút
+- Refresh token TTL hiện tại: 30 ngày
+- `idempotencyKey` là bắt buộc cho hầu hết mutation có reward/claim/update profile
+- `configVersion` là bắt buộc cho inventory mutation và battle start
+
+## Documentation Pages
+
+- Auth Docs: [/docs/auth](/docs/auth)
+- Player Docs: [/docs/player](/docs/player)
+- Character Docs: [/docs/character](/docs/character)
+- Inventory Docs: [/docs/inventory](/docs/inventory)
+- Formation Docs: [/docs/formation](/docs/formation)
+- Quest Docs: [/docs/quest](/docs/quest)
+- Battle Docs: [/docs/battle](/docs/battle)
+- Leaderboard Docs: [/docs/leaderboard](/docs/leaderboard)
+- Config Docs: [/docs/config](/docs/config)
+
+## External Reference
+
+- Environment Config: [Google Sheet](https://docs.google.com/spreadsheets/d/1gPHUbUbTPOIgvykkxbRK4BGK1JGbZBNVgmBMmJw6ItI/edit?usp=sharing)

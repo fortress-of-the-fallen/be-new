@@ -7,6 +7,8 @@ import { GlobalInterceptor } from 'src/api/interceptor/global.interceptor';
 import { ValidateException } from 'src/shared/exception/validate-exception';
 
 export async function configureApp(app: INestApplication): Promise<void> {
+   app.setGlobalPrefix('api');
+
    app.useGlobalPipes(
       new ValidationPipe({
          whitelist: true,
