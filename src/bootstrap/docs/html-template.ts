@@ -84,6 +84,36 @@ export function buildHtmlPage(title: string, bodyHtml: string): string {
         white-space: pre;
         line-height: 1.55;
       }
+      .pre-copy-wrapper {
+        position: relative;
+        margin: 14px 0 16px;
+      }
+      .pre-copy-wrapper pre {
+        margin: 0;
+        padding-top: 48px;
+      }
+      .copy-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border: 1px solid #3b4b66;
+        background: #162133;
+        color: #e6edf8;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font: 600 13px/1 "Inter", "Segoe UI", Arial, sans-serif;
+        cursor: pointer;
+        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+      }
+      .copy-button:hover {
+        background: #1d2c44;
+        border-color: #4d6388;
+      }
+      .copy-button.copied {
+        background: #0f3d2e;
+        border-color: #1f7a5f;
+        color: #dcfce7;
+      }
       pre code {
         background: transparent;
         border: 0;
@@ -205,6 +235,42 @@ export function buildHtmlPage(title: string, bodyHtml: string): string {
 
           details.appendChild(content);
           header.replaceWith(details);
+        });
+
+        const preBlocks = Array.from(document.querySelectorAll('pre'));
+        preBlocks.forEach((pre) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'pre-copy-wrapper';
+
+          const button = document.createElement('button');
+          button.className = 'copy-button';
+          button.type = 'button';
+          button.textContent = 'Copy';
+
+          const parent = pre.parentNode;
+          if (!parent) return;
+
+          parent.insertBefore(wrapper, pre);
+          wrapper.appendChild(pre);
+          wrapper.appendChild(button);
+
+          button.addEventListener('click', async () => {
+            const text = pre.innerText;
+            try {
+              await navigator.clipboard.writeText(text);
+              button.textContent = 'Copied';
+              button.classList.add('copied');
+              window.setTimeout(() => {
+                button.textContent = 'Copy';
+                button.classList.remove('copied');
+              }, 1600);
+            } catch (_error) {
+              button.textContent = 'Failed';
+              window.setTimeout(() => {
+                button.textContent = 'Copy';
+              }, 1600);
+            }
+          });
         });
       })();
     </script>
