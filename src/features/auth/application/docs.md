@@ -109,7 +109,7 @@ curl -X POST 'http://127.0.0.1:3000/api/v1/auth/register' \
 
 **Mô tả route**
 
-Xác thực account hiện có và tạo session refresh mới cho thiết bị hiện tại.
+Xác thực account hiện có và tạo session refresh mới cho thiết bị hiện tại. Backend không còn chặn số lượng session đăng nhập đồng thời.
 
 **Authentication**
 
@@ -154,7 +154,6 @@ Ghi chú:
 | --- | --- |
 | `VALIDATION_FAILED` | Body sai schema hoặc thiếu field bắt buộc. |
 | `INVALID_CREDENTIALS` | `username` không tồn tại, user không active, hoặc mật khẩu sai. |
-| `FORBIDDEN` | Đã đạt giới hạn session đồng thời của account. |
 | `INTERNAL_SERVER_ERROR` | Lỗi ngoài ý muốn khi tạo session mới. |
 
 **Sample curl**

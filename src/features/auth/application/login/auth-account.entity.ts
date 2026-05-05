@@ -7,6 +7,5 @@ export class AuthAccount {
       public readonly displayName: string,
       public readonly status: string,
       public readonly roles: string[],
-      public readonly maxSession: number,
    ) {}
 }

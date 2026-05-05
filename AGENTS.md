@@ -61,3 +61,9 @@
 - Maintain a gentle visual style for docs pages with readable contrast (do not use overly strong/saturated colors).
 - Use one unified color system across all docs pages; do not assign different global themes per page.
 - Color variety should happen inside each page via subtle accents for sections/components (for example headings, route summaries, tables), while keeping the overall palette consistent.
+
+## Docker Apply Rule
+
+- When backend code/config changes need to be applied to the local Docker runtime, restart the `web` service before concluding the task.
+- Preferred command in this repo: `docker compose -f docker-compose.prod.yml restart web`
+- After restarting `web`, re-run the relevant smoke check or `curl` verification if the affected flow depends on the running container state.

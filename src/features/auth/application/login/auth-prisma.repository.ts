@@ -35,7 +35,6 @@ export class AuthPrismaRepository {
          String((user.player?.profile as Record<string, unknown> | undefined)?.displayName ?? user.username),
          user.status,
          user.role,
-         user.maxSession,
       );
    }
 
@@ -88,19 +87,6 @@ export class AuthPrismaRepository {
             sessionId: session.id,
          };
       });
-   }
-
-   async countSessionsByUserId(userId: string): Promise<number> {
-      const sessions = await this.prisma.session.findMany({
-         where: {
-            user: userId,
-            expiresAt: {
-               gt: new Date(),
-            },
-         },
-      });
-
-      return sessions.filter(session => !session.revokedAt).length;
    }
 
    async createSession(payload: {

@@ -39,15 +39,6 @@ export class LoginApplicationService {
          );
       }
 
-      const sessionCount = await this.authRepository.countSessionsByUserId(user.id);
-      if (user.maxSession >= 0 && sessionCount >= user.maxSession) {
-         throw new ApiErrorException(
-            HttpStatus.CONFLICT,
-            ApiErrorCode.Forbidden,
-            'Maximum concurrent sessions reached',
-         );
-      }
-
       const refreshToken = IdentityHelper.generateNanoID(64);
       const userAgent = request?.headers['user-agent'];
       const forwardedFor = request?.headers['x-forwarded-for'];
