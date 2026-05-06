@@ -37,6 +37,7 @@ Table players {
   accountId String [unique, not null]
   profile Json [not null]
   statistics Json [not null]
+  tutorialProgress Json
   currency Json [not null]
   configVersion String [not null]
   createdAt DateTime [default: `now()`, not null]

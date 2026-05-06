@@ -60,6 +60,7 @@ model Player {
   accountId     String               @unique @db.ObjectId
   profile       Json
   statistics    Json
+  tutorialProgress Json?
   currency      Json
   configVersion String
   createdAt     DateTime             @default(now())

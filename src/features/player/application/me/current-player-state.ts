@@ -40,11 +40,30 @@ export type CurrentPlayerQuestProgressReward = {
    claimed: boolean;
 };
 
+export type CurrentPlayerTutorialProgress = {
+   finishOnboarding: boolean;
+   finishIntro: boolean;
+   finishFirstDeploy: boolean;
+   finishFirstBattle: boolean;
+   finishFirstDragUnit: boolean;
+   finishFirstDeployArcher: boolean;
+   finishFirstDeployBarricade: boolean;
+   finishFirstDeployCavalry: boolean;
+   finishUpgradeArcher: boolean;
+   finishUpgradeBase: boolean;
+   finishUpgradeUnitStat: boolean;
+   finishPurchaseSkill: boolean;
+   finishPvP: boolean;
+   isDoneUpgradeUnitTutorial: boolean;
+   updatedAt: string;
+};
+
 export type CurrentPlayerState = {
    playerId: string;
    username: string;
    profile: Record<string, any>;
    statistics: Record<string, any>;
+   tutorialProgress: CurrentPlayerTutorialProgress;
    currency: Record<string, any>;
    inventory: {
       heroes: CurrentPlayerInventoryItem[];

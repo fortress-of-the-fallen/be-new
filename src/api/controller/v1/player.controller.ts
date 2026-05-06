@@ -1,14 +1,20 @@
-import { Get, Patch, Body } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Get, Patch, Body, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { buildSuccessResponse } from 'src/api/model/res/base/api-envelope.model';
 import { UpdateProfileReq } from 'src/api/model/req/player/update-profile-req.model';
+import { UpdateTutorialProgressReq } from 'src/api/model/req/player/update-tutorial-progress-req.model';
 import { AllRoles } from 'src/features/auth/application/role-base.enum';
-import { PlayerApplicationService, UpdateProfileDto } from 'src/features/player/application';
+import {
+   PlayerApplicationService,
+   UpdateProfileDto,
+   UpdateTutorialProgressDto,
+} from 'src/features/player/application';
 import { CurrentAuth } from 'src/shared/decorator/current-auth.decorator';
 import { Controllers } from 'src/shared/decorator/controller.decorator';
 import { RateLimit } from 'src/shared/decorator/rate-limit.decorator';
 import { Roles } from 'src/shared/decorator/role.decorator';
 import { RequestAuthContext } from 'src/shared/services/auth/auth-context';
+import { Request } from 'express';
 
 @ApiTags('Player')
 @Controllers({ path: 'me', version: '1' })
@@ -44,6 +50,30 @@ export class PlayerController {
       const dto = Object.assign(new UpdateProfileDto(), req);
       return buildSuccessResponse(
          await this.playerApplicationService.updateProfile(authContext.playerId, dto),
+      );
+   }
+
+   @Patch('tutorial-progress')
+   @ApiOperation({ summary: 'Update current player tutorial progress' })
+   @ApiBearerAuth('access-token')
+   @ApiBody({ type: UpdateTutorialProgressReq })
+   @ApiOkResponse({
+      description: 'Returns updated tutorial progress',
+   })
+   @RateLimit({ limit: 20, ttl: 60 })
+   @Roles(...AllRoles)
+   async updateTutorialProgress(
+      @CurrentAuth() authContext: RequestAuthContext,
+      @Body() _req: UpdateTutorialProgressReq,
+      @Req() request: Request,
+   ) {
+      const req = (request.body ?? {}) as Record<string, unknown>;
+      const dto = Object.assign(new UpdateTutorialProgressDto(), {
+         updates: req?.updates,
+         clientUpdatedAt: req?.clientUpdatedAt,
+      });
+      return buildSuccessResponse(
+         await this.playerApplicationService.updateTutorialProgress(authContext.playerId, dto),
       );
    }
 }

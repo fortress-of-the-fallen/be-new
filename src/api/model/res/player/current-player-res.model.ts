@@ -87,7 +87,60 @@ class PlayerStatisticsRes {
    stageCampaign: number;
 
    @ApiProperty({ example: 0 })
+   battlesPlayed: number;
+
+   @ApiProperty({ example: 0 })
+   battlesWon: number;
+
+   @ApiProperty({ example: 0 })
    lobbyUpgradeSpent: number;
+}
+
+class PlayerTutorialProgressRes {
+   @ApiProperty({ example: false })
+   finishOnboarding: boolean;
+
+   @ApiProperty({ example: true })
+   finishIntro: boolean;
+
+   @ApiProperty({ example: true })
+   finishFirstDeploy: boolean;
+
+   @ApiProperty({ example: true })
+   finishFirstBattle: boolean;
+
+   @ApiProperty({ example: true })
+   finishFirstDragUnit: boolean;
+
+   @ApiProperty({ example: true })
+   finishFirstDeployArcher: boolean;
+
+   @ApiProperty({ example: true })
+   finishFirstDeployBarricade: boolean;
+
+   @ApiProperty({ example: true })
+   finishFirstDeployCavalry: boolean;
+
+   @ApiProperty({ example: true })
+   finishUpgradeArcher: boolean;
+
+   @ApiProperty({ example: true })
+   finishUpgradeBase: boolean;
+
+   @ApiProperty({ example: true })
+   finishUpgradeUnitStat: boolean;
+
+   @ApiProperty({ example: true })
+   finishPurchaseSkill: boolean;
+
+   @ApiProperty({ example: true })
+   finishPvP: boolean;
+
+   @ApiProperty({ example: true })
+   isDoneUpgradeUnitTutorial: boolean;
+
+   @ApiProperty({ example: '2026-05-05T10:00:00.000Z' })
+   updatedAt: string;
 }
 
 class PlayerCurrencyRes {
@@ -270,6 +323,9 @@ export class CurrentPlayerRes {
 
    @ApiProperty({ type: PlayerStatisticsRes })
    statistics: PlayerStatisticsRes;
+
+   @ApiProperty({ type: PlayerTutorialProgressRes })
+   tutorialProgress: PlayerTutorialProgressRes;
 
    @ApiProperty({ type: PlayerCurrencyRes })
    currency: PlayerCurrencyRes;

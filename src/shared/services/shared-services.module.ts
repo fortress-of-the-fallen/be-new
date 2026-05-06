@@ -6,6 +6,7 @@ import { RewardService } from './reward.service';
 import { LeaderboardService } from './leaderboard.service';
 import { QuestService } from './quest.service';
 import { PlayerStateQueryService } from './player-state-query.service';
+import { TutorialProgressService } from './tutorial-progress.service';
 
 @Module({
    imports: [PersistenceModule],
@@ -16,6 +17,7 @@ import { PlayerStateQueryService } from './player-state-query.service';
       LeaderboardService,
       QuestService,
       PlayerStateQueryService,
+      TutorialProgressService,
    ],
    exports: [
       ConfigCatalogService,
@@ -24,6 +26,7 @@ import { PlayerStateQueryService } from './player-state-query.service';
       LeaderboardService,
       QuestService,
       PlayerStateQueryService,
+      TutorialProgressService,
    ],
 })
 export class SharedServicesModule {}

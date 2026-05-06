@@ -45,6 +45,10 @@ export class MongoSchemaSeeding {
                   key: { 'statistics.stageCampaign': -1 },
                   name: 'players_statistics_stage_campaign_desc_idx',
                },
+               {
+                  key: { 'tutorialProgress.finishOnboarding': 1 },
+                  name: 'players_tutorial_progress_finish_onboarding_idx',
+               },
             ],
          },
          {

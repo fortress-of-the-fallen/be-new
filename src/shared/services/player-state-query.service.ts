@@ -3,6 +3,8 @@ import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { ApiErrorCode } from 'src/api/api-error-code';
 import { ApiErrorException } from 'src/shared/exception/api-error.exception';
 import { QuestService, QuestStateView } from './quest.service';
+import { TutorialProgressService } from './tutorial-progress.service';
+import { TutorialProgressState } from './tutorial-progress.constant';
 
 type PrismaDbClient = any;
 
@@ -29,6 +31,7 @@ export type PlayerOverviewView = {
    playerId: string;
    profile: Record<string, unknown>;
    statistics: Record<string, unknown>;
+   tutorialProgress: TutorialProgressState;
    currency: Record<string, unknown>;
    inventory: {
       heroes: InventoryItemView[];
@@ -47,6 +50,7 @@ export class PlayerStateQueryService {
    constructor(
       private readonly prisma: PrismaService,
       private readonly questService: QuestService,
+      private readonly tutorialProgressService: TutorialProgressService,
    ) {}
 
    async getPlayerOverview(
@@ -89,7 +93,12 @@ export class PlayerStateQueryService {
       return {
          playerId: player.id,
          profile: this.asObject(player.profile),
-         statistics: this.asObject(player.statistics),
+         statistics: this.normalizeStatistics(player.statistics),
+         tutorialProgress: this.tutorialProgressService.normalize(
+            player.tutorialProgress,
+            player.statistics,
+            player.updatedAt,
+         ),
          currency: this.asObject(player.currency),
          inventory: this.mapInventory(inventoryItems),
          formation: {
@@ -185,5 +194,18 @@ export class PlayerStateQueryService {
 
    private asArray<T>(value: unknown): T[] {
       return Array.isArray(value) ? (value as T[]) : [];
+   }
+
+   private normalizeStatistics(value: unknown): Record<string, unknown> {
+      const current = this.asObject<Record<string, unknown>>(value);
+      return {
+         ...current,
+         level: Number(current.level ?? 1),
+         exp: Number(current.exp ?? 0),
+         score: Number(current.score ?? 0),
+         stageCampaign: Number(current.stageCampaign ?? 1),
+         battlesPlayed: Number(current.battlesPlayed ?? 0),
+         battlesWon: Number(current.battlesWon ?? 0),
+      };
    }
 }

@@ -31,9 +31,9 @@ Khởi tạo battle session server-side, sinh `battleId`, `seed`, snapshot oppon
 ```
 
 Ghi chú:
-- `mode`: `PVP` hoặc `PVE`
-- `formationName`: phải tồn tại ở player hiện tại
-- `PVP` yêu cầu server tìm được ít nhất một opponent khả dụng
+- `mode`: `PVP` hoặc `PVE`.
+- `formationName`: phải tồn tại ở player hiện tại.
+- `PVP` yêu cầu server tìm được ít nhất một opponent khả dụng.
 
 **Output Schema**
 
@@ -62,9 +62,9 @@ Ghi chú:
       ]
     },
     "configVersion": "2026.05.02.1",
-    "expiresAt": "2026-05-04T10:15:00.000Z"
+    "expiresAt": "2026-05-05T10:15:00.000Z"
   },
-  "serverTime": "2026-05-04T10:00:00.000Z"
+  "serverTime": "2026-05-05T10:00:00.000Z"
 }
 ```
 
@@ -98,7 +98,7 @@ curl -X POST 'http://127.0.0.1:3000/api/v1/battles/start' \
 
 **Mô tả route**
 
-Hoàn tất battle session, grant reward, cập nhật quest progress và leaderboard projection.
+Hoàn tất battle session, grant reward, cập nhật quest progress, đồng bộ leaderboard, và trả về state mới để client sync ngay sau trận.
 
 **Authentication**
 
@@ -122,10 +122,10 @@ Body:
 ```
 
 Ghi chú:
-- `result`: `WIN | LOSE | DRAW`
-- `durationSec`: `1..3600`
-- `playerPercent`: `0..1`
-- Với config mặc định hiện tại, `PVE + DRAW` không có reward rule nên sẽ trả `NOT_FOUND`
+- `result`: `WIN | LOSE | DRAW`.
+- `durationSec`: `1..3600`.
+- `playerPercent`: `0..1`.
+- Với config mặc định hiện tại, `PVE + DRAW` không có reward rule nên sẽ trả `NOT_FOUND`.
 
 **Output Schema**
 
@@ -135,7 +135,7 @@ Ghi chú:
   "data": {
     "battleId": "b_j8kw9z0n3x",
     "result": "WIN",
-    "rewards": [
+    "grantedRewards": [
       {
         "itemId": "GO",
         "quantity": 100,
@@ -152,6 +152,31 @@ Ghi chú:
         "customData": null
       }
     ],
+    "statistics": {
+      "level": 1,
+      "exp": 20,
+      "score": 3,
+      "stageCampaign": 2,
+      "battlesPlayed": 1,
+      "battlesWon": 1
+    },
+    "tutorialProgress": {
+      "finishOnboarding": true,
+      "finishIntro": true,
+      "finishFirstDeploy": true,
+      "finishFirstBattle": true,
+      "finishFirstDragUnit": true,
+      "finishFirstDeployArcher": true,
+      "finishFirstDeployBarricade": true,
+      "finishFirstDeployCavalry": true,
+      "finishUpgradeArcher": true,
+      "finishUpgradeBase": true,
+      "finishUpgradeUnitStat": true,
+      "finishPurchaseSkill": true,
+      "finishPvP": true,
+      "isDoneUpgradeUnitTutorial": true,
+      "updatedAt": "2026-05-05T10:00:01.000Z"
+    },
     "playerDelta": {
       "levelBefore": 1,
       "levelAfter": 1,
@@ -179,9 +204,15 @@ Ghi chú:
       }
     ]
   },
-  "serverTime": "2026-05-04T10:00:00.000Z"
+  "serverTime": "2026-05-05T10:00:00.000Z"
 }
 ```
+
+Ghi chú:
+- `grantedRewards` là danh sách reward canonical cho client mới.
+- Response hiện vẫn giữ `rewards` như alias compatibility với contract cũ.
+- Khi `mode = PVE` và `result = WIN`, server tăng `statistics.stageCampaign`, `statistics.battlesPlayed`, `statistics.battlesWon`.
+- Ở chiến thắng onboarding đầu tiên, server đánh dấu `finishOnboarding`, `finishIntro`, `finishFirstDeploy`, `finishFirstBattle`.
 
 **Error Messages**
 
@@ -216,4 +247,5 @@ curl -X POST 'http://127.0.0.1:3000/api/v1/battles/b_j8kw9z0n3x/finish' \
 
 - API Portal: [/](/)
 - Swagger Battle: [/swagger/battle](/swagger/battle)
+- Player Docs: [/docs/player](/docs/player)
 - Leaderboard Docs: [/docs/leaderboard](/docs/leaderboard)

@@ -17,6 +17,9 @@ type CoreStats = {
    exp: number;
    level: number;
    score: number;
+   stageCampaign: number;
+   battlesPlayed: number;
+   battlesWon: number;
    [key: string]: unknown;
 };
 
@@ -180,6 +183,9 @@ export class RewardService {
          exp: Number(current.exp ?? 0),
          level: Number(current.level ?? 1),
          score: Number(current.score ?? 0),
+         stageCampaign: Number(current.stageCampaign ?? 1),
+         battlesPlayed: Number(current.battlesPlayed ?? 0),
+         battlesWon: Number(current.battlesWon ?? 0),
       };
    }
 

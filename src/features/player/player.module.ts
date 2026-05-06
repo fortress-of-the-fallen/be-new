@@ -5,6 +5,7 @@ import {
    GetCurrentPlayerApplicationService,
    PlayerApplicationService,
    UpdateProfileApplicationService,
+   UpdateTutorialProgressApplicationService,
 } from './application';
 
 @Module({
@@ -13,6 +14,7 @@ import {
       PlayerApplicationService,
       GetCurrentPlayerApplicationService,
       UpdateProfileApplicationService,
+      UpdateTutorialProgressApplicationService,
    ],
    exports: [PlayerApplicationService],
 })

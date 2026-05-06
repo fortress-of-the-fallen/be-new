@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { IdentityHelper } from 'src/shared/helper/identity.helper';
 import { ACTIVE_CONFIG_VERSION } from 'src/shared/services/fotf-config.defaults';
+import { buildDefaultTutorialProgress } from 'src/shared/services/tutorial-progress.constant';
 
 type PrismaDbClient = any;
 
@@ -45,6 +46,8 @@ type PlayerStatistics = {
    score: number;
    levelCastle: number;
    stageCampaign: number;
+   battlesPlayed: number;
+   battlesWon: number;
    lobbyUpgradeSpent: number;
 };
 
@@ -113,6 +116,7 @@ export class PlayerStateService {
             accountId: input.accountId,
             profile,
             statistics,
+            tutorialProgress: buildDefaultTutorialProgress(),
             currency,
             configVersion,
          },
@@ -237,6 +241,8 @@ export class PlayerStateService {
          score: 0,
          levelCastle: 0,
          stageCampaign: 1,
+         battlesPlayed: 0,
+         battlesWon: 0,
          lobbyUpgradeSpent: 0,
       };
    }
