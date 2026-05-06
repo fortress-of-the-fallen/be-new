@@ -156,6 +156,7 @@ Ghi chú:
       "level": 1,
       "exp": 20,
       "score": 3,
+      "trophy": 3,
       "stageCampaign": 2,
       "battlesPlayed": 1,
       "battlesWon": 1

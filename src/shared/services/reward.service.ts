@@ -17,6 +17,7 @@ type CoreStats = {
    exp: number;
    level: number;
    score: number;
+   trophy: number;
    stageCampaign: number;
    battlesPlayed: number;
    battlesWon: number;
@@ -90,6 +91,7 @@ export class RewardService {
       }
 
       statistics.level = await this.resolveLevel(statistics.exp);
+      statistics.trophy = statistics.score;
 
       playerDelta.levelAfter = statistics.level;
       playerDelta.scoreAfter = statistics.score;
@@ -178,11 +180,13 @@ export class RewardService {
 
    private normalizeStatistics(value: unknown): CoreStats {
       const current = (value as Record<string, unknown>) ?? {};
+      const score = Number(current.score ?? 0);
       return {
          ...current,
          exp: Number(current.exp ?? 0),
          level: Number(current.level ?? 1),
-         score: Number(current.score ?? 0),
+         score,
+         trophy: Number(current.trophy ?? score),
          stageCampaign: Number(current.stageCampaign ?? 1),
          battlesPlayed: Number(current.battlesPlayed ?? 0),
          battlesWon: Number(current.battlesWon ?? 0),

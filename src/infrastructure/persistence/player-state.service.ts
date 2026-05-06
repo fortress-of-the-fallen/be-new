@@ -15,6 +15,7 @@ type BootstrapPlayerInput = {
 type InventoryItemCustomData = Record<string, string>;
 
 type PlayerProfile = {
+   username: string;
    displayName: string;
    avatar: string;
    country: string;
@@ -44,6 +45,7 @@ type PlayerStatistics = {
    resistance: number;
    changedName: number;
    score: number;
+   trophy: number;
    levelCastle: number;
    stageCampaign: number;
    battlesPlayed: number;
@@ -208,6 +210,7 @@ export class PlayerStateService {
 
    buildDefaultProfile(username: string, displayName?: string): PlayerProfile {
       return {
+         username,
          displayName: displayName?.trim() || username,
          avatar: DEFAULT_AVATAR,
          country: DEFAULT_COUNTRY,
@@ -239,6 +242,7 @@ export class PlayerStateService {
          resistance: 0,
          changedName: 0,
          score: 0,
+         trophy: 0,
          levelCastle: 0,
          stageCampaign: 1,
          battlesPlayed: 0,

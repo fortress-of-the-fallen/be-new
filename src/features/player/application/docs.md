@@ -31,6 +31,7 @@ Không có body request.
   "data": {
     "playerId": "p_abc123",
     "profile": {
+      "username": "player01",
       "displayName": "Player01",
       "avatar": "normal",
       "country": "VN"
@@ -39,6 +40,7 @@ Không có body request.
       "level": 1,
       "exp": 0,
       "score": 0,
+      "trophy": 0,
       "stageCampaign": 1,
       "battlesPlayed": 0,
       "battlesWon": 0,

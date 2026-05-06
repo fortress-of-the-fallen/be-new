@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 class PlayerProfileRes {
+   @ApiProperty({ example: 'player01' })
+   username: string;
+
    @ApiProperty({ example: 'Player01' })
    displayName: string;
 
@@ -79,6 +82,9 @@ class PlayerStatisticsRes {
 
    @ApiProperty({ example: 0 })
    score: number;
+
+   @ApiProperty({ example: 0 })
+   trophy: number;
 
    @ApiProperty({ example: 0 })
    levelCastle: number;

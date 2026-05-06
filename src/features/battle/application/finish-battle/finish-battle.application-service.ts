@@ -166,11 +166,13 @@ export class FinishBattleApplicationService {
 
    private normalizeStatistics(value: unknown) {
       const current = (value as Record<string, unknown>) ?? {};
+      const score = Number(current.score ?? 0);
       return {
          ...current,
          level: Number(current.level ?? 1),
          exp: Number(current.exp ?? 0),
-         score: Number(current.score ?? 0),
+         score,
+         trophy: Number(current.trophy ?? score),
          stageCampaign: Number(current.stageCampaign ?? 1),
          battlesPlayed: Number(current.battlesPlayed ?? 0),
          battlesWon: Number(current.battlesWon ?? 0),

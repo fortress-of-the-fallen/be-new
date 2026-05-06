@@ -29,6 +29,7 @@ export type FormationSlotView = {
 
 export type PlayerOverviewView = {
    playerId: string;
+   username: string;
    profile: Record<string, unknown>;
    statistics: Record<string, unknown>;
    tutorialProgress: TutorialProgressState;
@@ -62,6 +63,13 @@ export class PlayerStateQueryService {
             where: {
                id: playerId,
             },
+            include: {
+               account: {
+                  select: {
+                     username: true,
+                  },
+               },
+            },
          }),
          db.playerInventoryItem.findMany({
             where: {
@@ -92,7 +100,12 @@ export class PlayerStateQueryService {
 
       return {
          playerId: player.id,
-         profile: this.asObject(player.profile),
+         username: String(
+            player.account?.username ??
+               this.asObject<Record<string, unknown>>(player.profile).username ??
+               '',
+         ),
+         profile: this.normalizeProfile(player.profile, player.account?.username),
          statistics: this.normalizeStatistics(player.statistics),
          tutorialProgress: this.tutorialProgressService.normalize(
             player.tutorialProgress,
@@ -196,13 +209,23 @@ export class PlayerStateQueryService {
       return Array.isArray(value) ? (value as T[]) : [];
    }
 
+   private normalizeProfile(value: unknown, accountUsername?: string): Record<string, unknown> {
+      const current = this.asObject<Record<string, unknown>>(value);
+      return {
+         ...current,
+         username: String(current.username ?? accountUsername ?? ''),
+      };
+   }
+
    private normalizeStatistics(value: unknown): Record<string, unknown> {
       const current = this.asObject<Record<string, unknown>>(value);
+      const score = Number(current.score ?? 0);
       return {
          ...current,
          level: Number(current.level ?? 1),
          exp: Number(current.exp ?? 0),
-         score: Number(current.score ?? 0),
+         score,
+         trophy: Number(current.trophy ?? score),
          stageCampaign: Number(current.stageCampaign ?? 1),
          battlesPlayed: Number(current.battlesPlayed ?? 0),
          battlesWon: Number(current.battlesWon ?? 0),
