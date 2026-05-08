@@ -1,4 +1,4 @@
-import { Body, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Get, Param, ParseEnumPipe, ParseIntPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IdempotencyReq } from 'src/api/model/req/common/idempotency-req.model';
 import { buildSuccessResponse } from 'src/api/model/res/base/api-envelope.model';
@@ -9,6 +9,11 @@ import { Controllers } from 'src/shared/decorator/controller.decorator';
 import { RateLimit } from 'src/shared/decorator/rate-limit.decorator';
 import { Roles } from 'src/shared/decorator/role.decorator';
 import { RequestAuthContext } from 'src/shared/services/auth/auth-context';
+
+const QUEST_PROGRESS_TRACKS = {
+   daily: 'daily',
+   weekly: 'weekly',
+} as const;
 
 @ApiTags('Quest')
 @Controllers({ path: 'quests', version: '1' })
@@ -53,7 +58,7 @@ export class QuestController {
    @Roles(...AllRoles)
    async claimProgressReward(
       @CurrentAuth() authContext: RequestAuthContext,
-      @Param('track') track: 'daily' | 'weekly',
+      @Param('track', new ParseEnumPipe(QUEST_PROGRESS_TRACKS)) track: 'daily' | 'weekly',
       @Param('stage', ParseIntPipe) stage: number,
       @Body() req: IdempotencyReq,
    ) {

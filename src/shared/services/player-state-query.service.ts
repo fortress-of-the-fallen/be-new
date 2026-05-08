@@ -111,8 +111,11 @@ export class PlayerStateQueryService {
             player.tutorialProgress,
             player.statistics,
             player.updatedAt,
+            inventoryItems
+               .filter(item => item.itemType === 'hero')
+               .map(item => ({ customData: item.customData })),
          ),
-         currency: this.asObject(player.currency),
+         currency: this.normalizeCurrency(player.currency),
          inventory: this.mapInventory(inventoryItems),
          formation: {
             name: formation?.name ?? 'active',
@@ -220,15 +223,51 @@ export class PlayerStateQueryService {
    private normalizeStatistics(value: unknown): Record<string, unknown> {
       const current = this.asObject<Record<string, unknown>>(value);
       const score = Number(current.score ?? 0);
+      const coreStats = this.asObject<Record<string, unknown>>(current.coreStats);
       return {
          ...current,
+         levelMap: Number(current.levelMap ?? 1),
+         wave: Number(current.wave ?? 1),
+         gameCoin: Number(current.gameCoin ?? 0),
+         expBattle: Number(current.expBattle ?? 0),
+         levelBattle: Number(current.levelBattle ?? 0),
          level: Number(current.level ?? 1),
          exp: Number(current.exp ?? 0),
+         statPointsAvailable: Number(current.statPointsAvailable ?? 0),
+         statPointsSpent: Number(current.statPointsSpent ?? 0),
+         coreStats: {
+            ...coreStats,
+            strength: Number(coreStats.strength ?? 0),
+            dexterity: Number(coreStats.dexterity ?? 0),
+            constitution: Number(coreStats.constitution ?? 0),
+            intelligence: Number(coreStats.intelligence ?? 0),
+            wisdom: Number(coreStats.wisdom ?? 0),
+            charisma: Number(coreStats.charisma ?? 0),
+         },
+         karma: Number(current.karma ?? 0),
+         affinity: Number(current.affinity ?? 0),
+         luck: Number(current.luck ?? 0),
+         resistance: Number(current.resistance ?? 0),
+         changedName: Number(current.changedName ?? 0),
          score,
          trophy: Number(current.trophy ?? score),
+         levelCastle: Number(current.levelCastle ?? 0),
          stageCampaign: Number(current.stageCampaign ?? 1),
          battlesPlayed: Number(current.battlesPlayed ?? 0),
          battlesWon: Number(current.battlesWon ?? 0),
+         lobbyUpgradeSpent: Number(current.lobbyUpgradeSpent ?? 0),
+      };
+   }
+
+   private normalizeCurrency(value: unknown): Record<string, number> {
+      const current = this.asObject<Record<string, unknown>>(value);
+      return {
+         peasant: Number(current.peasant ?? 0),
+         gold: Number(current.gold ?? 0),
+         gem: Number(current.gem ?? 0),
+         normalShard: Number(current.normalShard ?? 0),
+         eliteShard: Number(current.eliteShard ?? 0),
+         specialShard: Number(current.specialShard ?? 0),
       };
    }
 }

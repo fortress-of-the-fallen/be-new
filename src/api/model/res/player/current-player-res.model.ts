@@ -109,7 +109,7 @@ class PlayerTutorialProgressRes {
    @ApiProperty({ example: true })
    finishIntro: boolean;
 
-   @ApiProperty({ example: true })
+   @ApiProperty({ example: false })
    finishFirstDeploy: boolean;
 
    @ApiProperty({ example: true })
@@ -142,7 +142,7 @@ class PlayerTutorialProgressRes {
    @ApiProperty({ example: true })
    finishPvP: boolean;
 
-   @ApiProperty({ example: true })
+   @ApiProperty({ example: false })
    isDoneUpgradeUnitTutorial: boolean;
 
    @ApiProperty({ example: '2026-05-05T10:00:00.000Z' })
@@ -233,29 +233,6 @@ class PlayerFormationRes {
    slots: PlayerFormationSlotRes[];
 }
 
-class PlayerQuestRes {
-   @ApiProperty({ example: 1 })
-   questId: number;
-
-   @ApiProperty({ example: 'daily' })
-   type: string;
-
-   @ApiProperty({ example: 'PLAY_GAME' })
-   actionId: string;
-
-   @ApiProperty({ example: 1 })
-   progress: number;
-
-   @ApiProperty({ example: 3 })
-   required: number;
-
-   @ApiProperty({ example: false })
-   claimed: boolean;
-
-   @ApiProperty({ example: '2026-05-02' })
-   periodKey: string;
-}
-
 class PlayerQuestRewardPayloadRes {
    @ApiProperty({ example: 'GE' })
    itemId: string;
@@ -267,24 +244,47 @@ class PlayerQuestRewardPayloadRes {
    customData?: Record<string, string> | null;
 }
 
-class PlayerQuestProgressRewardRes {
-   @ApiProperty({ example: 'daily' })
-   track: string;
+class PlayerQuestRes {
+   @ApiProperty({ example: 1 })
+   questId: number;
 
+   @ApiProperty({ example: 'daily' })
+   type: string;
+
+   @ApiProperty({ example: 'PLAY_GAME' })
+   actionId: string;
+
+   @ApiProperty({ example: 'Play 3 battles' })
+   description: string;
+
+   @ApiProperty({ example: 1 })
+   progress: number;
+
+   @ApiProperty({ example: 3 })
+   required: number;
+
+   @ApiProperty({ example: false })
+   isCompleted: boolean;
+
+   @ApiProperty({ example: false })
+   rewardClaimed: boolean;
+
+   @ApiProperty({ type: [PlayerQuestRewardPayloadRes] })
+   rewards: PlayerQuestRewardPayloadRes[];
+}
+
+class PlayerQuestProgressRewardRes {
    @ApiProperty({ example: 2 })
    stage: number;
 
-   @ApiProperty({ example: 2 })
-   points: number;
+   @ApiProperty({ example: false })
+   claimed: boolean;
 
-   @ApiProperty({ example: '2026-05-02' })
-   periodKey: string;
+   @ApiProperty({ example: true })
+   isUnlocked: boolean;
 
    @ApiProperty({ type: PlayerQuestRewardPayloadRes })
    reward: PlayerQuestRewardPayloadRes;
-
-   @ApiProperty({ example: false })
-   claimed: boolean;
 }
 
 class PlayerQuestTrackRes {

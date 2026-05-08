@@ -3,13 +3,18 @@ import { ApiErrorCode } from 'src/api/api-error-code';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { ApiErrorException } from 'src/shared/exception/api-error.exception';
 import {
+   ACTIVE_TUTORIAL_PROGRESS_FIELDS,
+   ACTIVE_TUTORIAL_PROGRESS_META_KEY,
+   ActiveTutorialProgressField,
    buildDefaultTutorialProgress,
    TUTORIAL_PROGRESS_FIELDS,
-   TutorialProgressField,
    TutorialProgressState,
 } from './tutorial-progress.constant';
 
 type PrismaDbClient = any;
+type HeroInventoryState = {
+   customData: unknown;
+};
 
 type UpdateTutorialProgressInput = {
    playerId: string;
@@ -26,9 +31,11 @@ export class TutorialProgressService {
       value: unknown,
       statistics: unknown,
       fallbackUpdatedAt?: Date,
+      heroes: HeroInventoryState[] = [],
    ): TutorialProgressState {
       const source = this.asObject(value);
       const defaults = buildDefaultTutorialProgress(fallbackUpdatedAt ?? new Date());
+      const verifiedActiveFlags = this.readVerifiedActiveFlags(source);
       const normalized = {
          ...defaults,
       };
@@ -42,6 +49,16 @@ export class TutorialProgressService {
       if (this.hasLegacyProgress(statistics)) {
          normalized.finishOnboarding = true;
       }
+
+      if (verifiedActiveFlags.finishOnboarding) {
+         normalized.finishOnboarding = true;
+      }
+
+      normalized.finishFirstDeploy =
+         Boolean(verifiedActiveFlags.finishFirstDeploy) ||
+         this.hasSecondTutorialBattleProgress(statistics);
+
+      normalized.isDoneUpgradeUnitTutorial = this.hasUpgradedHero(heroes);
 
       if (source.updatedAt instanceof Date) {
          normalized.updatedAt = source.updatedAt.toISOString();
@@ -83,11 +100,34 @@ export class TutorialProgressService {
          );
       }
 
+      const heroes = await db.playerInventoryItem.findMany({
+         where: {
+            playerId: input.playerId,
+            itemType: 'hero',
+         },
+         select: {
+            customData: true,
+         },
+      });
+
       const updates = this.validateUpdates(input.updates);
-      const current = this.normalize(player.tutorialProgress, player.statistics, player.updatedAt);
-      const next = {
+      const current = this.normalize(player.tutorialProgress, player.statistics, player.updatedAt, heroes);
+      let nextStored: Record<string, unknown> = {
+         ...this.asObject(player.tutorialProgress),
          ...current,
       };
+      const validations = this.validateActiveStateTransitions(updates, current, heroes);
+
+      if (validations.length > 0) {
+         throw new ApiErrorException(
+            HttpStatus.BAD_REQUEST,
+            ApiErrorCode.ValidationFailed,
+            'Invalid tutorial progress field',
+            {
+               validations,
+            },
+         );
+      }
 
       for (const [field, value] of Object.entries(updates)) {
          if (current[field] && value === false) {
@@ -101,53 +141,87 @@ export class TutorialProgressService {
             );
          }
 
-         next[field] = current[field] || value;
+         if (value === true) {
+            nextStored = this.markActiveFieldCompleted(nextStored, field as ActiveTutorialProgressField);
+         } else {
+            nextStored[field] = false;
+         }
       }
-
-      const nextUpdatedAt = new Date();
-      next.updatedAt = nextUpdatedAt.toISOString();
 
       await db.player.update({
          where: {
             id: input.playerId,
          },
          data: {
-            tutorialProgress: next,
+            tutorialProgress: nextStored,
          },
       });
 
-      return next;
+      return this.normalize(nextStored, player.statistics, player.updatedAt, heroes);
    }
 
-   applyOnboardingBattleWin(
+   applyPveBattleWin(
       value: unknown,
       statistics: unknown,
       fallbackUpdatedAt?: Date,
    ): {
-      tutorialProgress: TutorialProgressState;
+      storedTutorialProgress: Record<string, unknown>;
       changed: boolean;
    } {
       const current = this.normalize(value, statistics, fallbackUpdatedAt);
-      const next = {
+      let nextStored: Record<string, unknown> = {
+         ...this.asObject(value),
          ...current,
       };
 
-      for (const field of ['finishOnboarding', 'finishIntro', 'finishFirstDeploy', 'finishFirstBattle'] as const) {
-         next[field] = true;
-      }
-
-      const changed = this.hasStateChanged(current, next);
-      if (changed) {
-         next.updatedAt = new Date().toISOString();
+      if (!current.finishOnboarding) {
+         nextStored = this.markActiveFieldCompleted(nextStored, 'finishOnboarding');
+      } else if (!current.finishFirstDeploy) {
+         nextStored = this.markActiveFieldCompleted(nextStored, 'finishFirstDeploy');
       }
 
       return {
-         tutorialProgress: next,
-         changed,
+         storedTutorialProgress: nextStored,
+         changed: this.hasStoredStateChanged(value, nextStored),
       };
    }
 
-   private validateUpdates(updates: Record<string, unknown>): Partial<Record<TutorialProgressField, boolean>> {
+   applyUpgradeTutorialCompletion(
+      value: unknown,
+      statistics: unknown,
+      fallbackUpdatedAt?: Date,
+   ): {
+      storedTutorialProgress: Record<string, unknown>;
+      changed: boolean;
+   } {
+      const current = this.normalize(value, statistics, fallbackUpdatedAt);
+      if (current.isDoneUpgradeUnitTutorial) {
+         return {
+            storedTutorialProgress: {
+               ...this.asObject(value),
+               ...current,
+            },
+            changed: false,
+         };
+      }
+
+      const nextStored = this.markActiveFieldCompleted(
+         {
+            ...this.asObject(value),
+            ...current,
+         },
+         'isDoneUpgradeUnitTutorial',
+      );
+
+      return {
+         storedTutorialProgress: nextStored,
+         changed: true,
+      };
+   }
+
+   private validateUpdates(
+      updates: Record<string, unknown>,
+   ): Partial<Record<ActiveTutorialProgressField, boolean>> {
       if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
          throw new ApiErrorException(
             HttpStatus.BAD_REQUEST,
@@ -160,10 +234,10 @@ export class TutorialProgressService {
       }
 
       const validations: string[] = [];
-      const normalized: Partial<Record<TutorialProgressField, boolean>> = {};
+      const normalized: Partial<Record<ActiveTutorialProgressField, boolean>> = {};
 
       for (const [field, value] of Object.entries(updates)) {
-         if (!this.isTutorialProgressField(field)) {
+         if (!this.isActiveTutorialProgressField(field)) {
             validations.push(`updates.${field} is not allowed`);
             continue;
          }
@@ -194,6 +268,24 @@ export class TutorialProgressService {
       return normalized;
    }
 
+   private validateActiveStateTransitions(
+      updates: Partial<Record<ActiveTutorialProgressField, boolean>>,
+      current: TutorialProgressState,
+      heroes: HeroInventoryState[],
+   ): string[] {
+      const validations: string[] = [];
+
+      if (updates.finishFirstDeploy === true && !current.finishOnboarding && updates.finishOnboarding !== true) {
+         validations.push('updates.finishFirstDeploy requires finishOnboarding to be true');
+      }
+
+      if (updates.isDoneUpgradeUnitTutorial === true && !this.hasUpgradedHero(heroes)) {
+         validations.push('updates.isDoneUpgradeUnitTutorial requires at least one hero with level greater than 1');
+      }
+
+      return validations;
+   }
+
    private hasLegacyProgress(statistics: unknown): boolean {
       const source = this.asObject(statistics);
       return (
@@ -205,15 +297,71 @@ export class TutorialProgressService {
       );
    }
 
-   private hasStateChanged(current: TutorialProgressState, next: TutorialProgressState): boolean {
-      return TUTORIAL_PROGRESS_FIELDS.some(field => current[field] !== next[field]);
+   private hasSecondTutorialBattleProgress(statistics: unknown): boolean {
+      const source = this.asObject(statistics);
+      return Number(source.stageCampaign ?? 1) > 2 || Number(source.battlesWon ?? 0) > 1;
+   }
+
+   private hasUpgradedHero(heroes: HeroInventoryState[]): boolean {
+      return heroes.some(hero => Number(this.asObject(hero.customData).lv ?? 1) > 1);
+   }
+
+   private readVerifiedActiveFlags(
+      source: Record<string, unknown>,
+   ): Partial<Record<ActiveTutorialProgressField, string>> {
+      const raw = this.asObject(source[ACTIVE_TUTORIAL_PROGRESS_META_KEY]);
+      const verified: Partial<Record<ActiveTutorialProgressField, string>> = {};
+
+      for (const field of ACTIVE_TUTORIAL_PROGRESS_FIELDS) {
+         if (typeof raw[field] === 'string' && !Number.isNaN(Date.parse(raw[field] as string))) {
+            verified[field] = new Date(raw[field] as string).toISOString();
+         }
+      }
+
+      return verified;
+   }
+
+   private markActiveFieldCompleted(
+      source: Record<string, unknown>,
+      field: ActiveTutorialProgressField,
+   ): Record<string, unknown> {
+      const completedAt = new Date().toISOString();
+      const verifiedActiveFlags = this.readVerifiedActiveFlags(source);
+
+      return {
+         ...source,
+         [field]: true,
+         updatedAt: completedAt,
+         [ACTIVE_TUTORIAL_PROGRESS_META_KEY]: {
+            ...verifiedActiveFlags,
+            [field]: completedAt,
+         },
+      };
+   }
+
+   private hasStoredStateChanged(currentValue: unknown, nextValue: Record<string, unknown>): boolean {
+      const current = this.asObject(currentValue);
+      const currentMeta = this.readVerifiedActiveFlags(current);
+      const nextMeta = this.readVerifiedActiveFlags(nextValue);
+
+      if (current.updatedAt !== nextValue.updatedAt) {
+         return true;
+      }
+
+      if (
+         ACTIVE_TUTORIAL_PROGRESS_FIELDS.some(field => currentMeta[field] !== nextMeta[field])
+      ) {
+         return true;
+      }
+
+      return TUTORIAL_PROGRESS_FIELDS.some(field => current[field] !== nextValue[field]);
    }
 
    private asObject(value: unknown): Record<string, unknown> {
       return (value as Record<string, unknown>) ?? {};
    }
 
-   private isTutorialProgressField(field: string): field is TutorialProgressField {
-      return (TUTORIAL_PROGRESS_FIELDS as readonly string[]).includes(field);
+   private isActiveTutorialProgressField(field: string): field is ActiveTutorialProgressField {
+      return (ACTIVE_TUTORIAL_PROGRESS_FIELDS as readonly string[]).includes(field);
    }
 }

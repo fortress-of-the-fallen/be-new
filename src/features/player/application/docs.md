@@ -30,6 +30,7 @@ Không có body request.
   "success": true,
   "data": {
     "playerId": "p_abc123",
+    "username": "player01",
     "profile": {
       "username": "player01",
       "displayName": "Player01",
@@ -49,7 +50,7 @@ Không có body request.
     "tutorialProgress": {
       "finishOnboarding": false,
       "finishIntro": true,
-      "finishFirstDeploy": true,
+      "finishFirstDeploy": false,
       "finishFirstBattle": true,
       "finishFirstDragUnit": true,
       "finishFirstDeployArcher": true,
@@ -60,7 +61,7 @@ Không có body request.
       "finishUpgradeUnitStat": true,
       "finishPurchaseSkill": true,
       "finishPvP": true,
-      "isDoneUpgradeUnitTutorial": true,
+      "isDoneUpgradeUnitTutorial": false,
       "updatedAt": "2026-05-05T10:00:00.000Z"
     },
     "currency": {
@@ -145,8 +146,13 @@ Không có body request.
 
 Ghi chú:
 - `tutorialProgress` là source of truth để Unity đồng bộ onboarding/tutorial giữa nhiều thiết bị.
-- `statistics.stageCampaign`, `statistics.battlesPlayed`, `statistics.battlesWon` luôn được hydrate về dạng số.
+- `quests` cũng là source of truth server-side cho progress/reset daily, weekly, achievement của account đã đăng nhập.
+- Ví dụ schema ở trên rút gọn `quests` cho dễ đọc; runtime hiện hydrate đầy đủ quest rows theo config active ngay từ lần fetch đầu tiên.
+- `statistics` luôn được hydrate về full shape canonical, gồm các field battle/campaign như `levelMap`, `wave`, `score`, `trophy`, `stageCampaign`, `battlesPlayed`, `battlesWon`.
+- `currency` luôn được hydrate đủ các field canonical `peasant`, `gold`, `gem`, `normalShard`, `eliteShard`, `specialShard`, kể cả account cũ đang thiếu field trong DB.
 - Legacy account chưa có `tutorialProgress` sẽ được normalize an toàn từ statistics hiện tại, không reset onboarding về `false` nếu account đã có tiến trình.
+- `finishFirstDeploy` chỉ được trả về `true` khi server có bằng chứng tutorial battle 2 đã hoàn thành.
+- `isDoneUpgradeUnitTutorial` chỉ được trả về `true` khi inventory có ít nhất một hero với `customData.lv > 1`.
 
 **Error Messages**
 
@@ -249,7 +255,7 @@ curl -X PATCH 'http://127.0.0.1:3000/api/v1/me/profile' \
 
 **Mô tả route**
 
-Client gọi route này mỗi khi hoàn thành một tutorial step. Server chỉ chấp nhận allowlist boolean field đã biết và chỉ cho phép cập nhật monotonic mặc định (`false -> true`).
+Client gọi route này mỗi khi hoàn thành một tutorial step active. Server chỉ chấp nhận ba cờ active hiện tại (`finishOnboarding`, `finishFirstDeploy`, `isDoneUpgradeUnitTutorial`) và chỉ cho phép cập nhật monotonic mặc định (`false -> true`).
 
 **Authentication**
 
@@ -260,10 +266,7 @@ Client gọi route này mỗi khi hoàn thành một tutorial step. Server chỉ
 ```json
 {
   "updates": {
-    "finishOnboarding": true,
-    "finishFirstBattle": true,
-    "finishFirstDeploy": true,
-    "isDoneUpgradeUnitTutorial": true
+    "finishOnboarding": true
   },
   "clientUpdatedAt": "2026-05-05T10:00:00.000Z"
 }
@@ -271,9 +274,11 @@ Client gọi route này mỗi khi hoàn thành một tutorial step. Server chỉ
 
 Ghi chú:
 - `updates` phải là object.
-- Chỉ chấp nhận các field tutorial đã định nghĩa.
+- Chỉ chấp nhận ba field active hiện tại.
 - Unknown field sẽ trả `VALIDATION_FAILED`.
 - `true -> false` bị reject trên endpoint này.
+- `finishFirstDeploy=true` yêu cầu `finishOnboarding` đã `true` hoặc được set `true` trong cùng request.
+- `isDoneUpgradeUnitTutorial=true` yêu cầu inventory đã có ít nhất một hero với `customData.lv > 1`.
 
 **Output Schema**
 
@@ -284,7 +289,7 @@ Ghi chú:
     "tutorialProgress": {
       "finishOnboarding": true,
       "finishIntro": true,
-      "finishFirstDeploy": true,
+      "finishFirstDeploy": false,
       "finishFirstBattle": true,
       "finishFirstDragUnit": true,
       "finishFirstDeployArcher": true,
@@ -295,7 +300,7 @@ Ghi chú:
       "finishUpgradeUnitStat": true,
       "finishPurchaseSkill": true,
       "finishPvP": true,
-      "isDoneUpgradeUnitTutorial": true,
+      "isDoneUpgradeUnitTutorial": false,
       "updatedAt": "2026-05-05T10:00:01.000Z"
     }
   },
@@ -309,7 +314,7 @@ Ghi chú:
 | --- | --- |
 | `UNAUTHORIZED` | Thiếu bearer token hoặc access token không hợp lệ/hết hạn. |
 | `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
-| `VALIDATION_FAILED` | `updates` rỗng, unknown field, value không phải boolean, hoặc cố chuyển `true -> false`. |
+| `VALIDATION_FAILED` | `updates` rỗng, gửi legacy/unknown field, value không phải boolean, vi phạm dependency active flags, hoặc cố chuyển `true -> false`. |
 | `NOT_FOUND` | Không tìm thấy player để cập nhật. |
 
 **Sample curl**
@@ -320,10 +325,7 @@ curl -X PATCH 'http://127.0.0.1:3000/api/v1/me/tutorial-progress' \
   -H 'Authorization: Bearer <access-token>' \
   -d '{
     "updates": {
-      "finishOnboarding": true,
-      "finishFirstBattle": true,
-      "finishFirstDeploy": true,
-      "isDoneUpgradeUnitTutorial": true
+      "finishOnboarding": true
     },
     "clientUpdatedAt": "2026-05-05T10:00:00.000Z"
   }'

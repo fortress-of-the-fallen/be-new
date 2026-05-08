@@ -6,6 +6,15 @@ import { ConfigCatalogService } from 'src/shared/services/config-catalog.service
 import { IdempotencyService } from 'src/shared/services/idempotency.service';
 import { RewardService } from 'src/shared/services/reward.service';
 
+type InventoryHeroView = {
+   instanceId: string;
+   itemId: string;
+   itemType: string;
+   itemClass?: string | null;
+   remainingUses: number;
+   customData: Record<string, string>;
+};
+
 @Injectable()
 export class EvolveHeroApplicationService {
    constructor(
@@ -116,14 +125,11 @@ export class EvolveHeroApplicationService {
                      },
                   },
                });
+               const updatedHeroView = this.mapHero(updatedHero);
 
                return {
-                  hero: {
-                     instanceId: updatedHero.id,
-                     itemId: updatedHero.itemId,
-                     itemType: updatedHero.itemType,
-                     customData: updatedHero.customData,
-                  },
+                  updatedHero: updatedHeroView,
+                  hero: updatedHeroView,
                   consumed: [
                      {
                         itemId: hero.itemId,
@@ -145,5 +151,23 @@ export class EvolveHeroApplicationService {
          default:
             return 'NormalShard';
       }
+   }
+
+   private mapHero(hero: {
+      id: string;
+      itemId: string;
+      itemType: string;
+      itemClass?: string | null;
+      remainingUses: number;
+      customData: unknown;
+   }): InventoryHeroView {
+      return {
+         instanceId: hero.id,
+         itemId: hero.itemId,
+         itemType: hero.itemType,
+         itemClass: hero.itemClass ?? null,
+         remainingUses: hero.remainingUses,
+         customData: ((hero.customData as Record<string, string>) ?? {}) as Record<string, string>,
+      };
    }
 }

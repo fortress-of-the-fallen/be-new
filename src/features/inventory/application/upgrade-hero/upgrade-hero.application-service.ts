@@ -6,6 +6,16 @@ import { ConfigCatalogService } from 'src/shared/services/config-catalog.service
 import { IdempotencyService } from 'src/shared/services/idempotency.service';
 import { QuestService } from 'src/shared/services/quest.service';
 import { RewardService } from 'src/shared/services/reward.service';
+import { TutorialProgressService } from 'src/shared/services/tutorial-progress.service';
+
+type InventoryHeroView = {
+   instanceId: string;
+   itemId: string;
+   itemType: string;
+   itemClass?: string | null;
+   remainingUses: number;
+   customData: Record<string, string>;
+};
 
 @Injectable()
 export class UpgradeHeroApplicationService {
@@ -15,6 +25,7 @@ export class UpgradeHeroApplicationService {
       private readonly idempotencyService: IdempotencyService,
       private readonly rewardService: RewardService,
       private readonly questService: QuestService,
+      private readonly tutorialProgressService: TutorialProgressService,
    ) {}
 
    async upgrade(playerId: string, instanceId: string, configVersion: string, idempotencyKey: string) {
@@ -41,8 +52,8 @@ export class UpgradeHeroApplicationService {
                if (!hero) {
                   throw new ApiErrorException(
                      HttpStatus.NOT_FOUND,
-                     ApiErrorCode.NotFound,
-                     `Hero instance ${instanceId} was not found`,
+                     ApiErrorCode.HeroInstanceNotFound,
+                     'Hero instance not found',
                   );
                }
 
@@ -54,6 +65,29 @@ export class UpgradeHeroApplicationService {
                const heroConfig = await this.configCatalogService.getHeroConfig(hero.itemId);
                const rule = await this.configCatalogService.getHeroUpgradeRule(hero.itemId, currentLevel);
 
+               const shardCurrency = this.mapShardCurrency(heroConfig.shardCurrency);
+
+               try {
+                  await this.rewardService.assertResources({
+                     db,
+                     playerId,
+                     requiredCurrency: {
+                        gold: rule.goldCost,
+                        [this.mapRewardCurrencyField(shardCurrency)]: rule.shardCost,
+                     },
+                  });
+               } catch (error) {
+                  if (this.isInsufficientResourceError(error)) {
+                     throw new ApiErrorException(
+                        HttpStatus.CONFLICT,
+                        ApiErrorCode.InsufficientResources,
+                        'Not enough resources to upgrade hero',
+                     );
+                  }
+
+                  throw error;
+               }
+
                const rewardResult = await this.rewardService.applyRewards({
                   db,
                   playerId,
@@ -63,7 +97,7 @@ export class UpgradeHeroApplicationService {
                   rewards: [
                      { itemId: 'GO', quantity: rule.goldCost * -1, customData: null },
                      {
-                        itemId: this.mapShardCurrency(heroConfig.shardCurrency),
+                        itemId: shardCurrency,
                         quantity: rule.shardCost * -1,
                         customData: null,
                      },
@@ -81,6 +115,50 @@ export class UpgradeHeroApplicationService {
                      },
                   },
                });
+               const updatedHeroView = this.mapHero(updatedHero);
+               const consumed = [
+                  { itemId: 'GO', quantity: rule.goldCost },
+                  {
+                     itemId: shardCurrency,
+                     quantity: rule.shardCost,
+                  },
+               ].filter(item => item.quantity > 0);
+
+               const player = await db.player.findUnique({
+                  where: {
+                     id: playerId,
+                  },
+                  select: {
+                     statistics: true,
+                     tutorialProgress: true,
+                     updatedAt: true,
+                  },
+               });
+
+               if (!player) {
+                  throw new ApiErrorException(
+                     HttpStatus.NOT_FOUND,
+                     ApiErrorCode.NotFound,
+                     `Player ${playerId} was not found`,
+                  );
+               }
+
+               const tutorialProgressUpdate = this.tutorialProgressService.applyUpgradeTutorialCompletion(
+                  player.tutorialProgress,
+                  player.statistics,
+                  player.updatedAt,
+               );
+
+               if (tutorialProgressUpdate.changed) {
+                  await db.player.update({
+                     where: {
+                        id: playerId,
+                     },
+                     data: {
+                        tutorialProgress: tutorialProgressUpdate.storedTutorialProgress,
+                     },
+                  });
+               }
 
                const questUpdates = await this.questService.applyProgress(
                   playerId,
@@ -89,20 +167,25 @@ export class UpgradeHeroApplicationService {
                );
 
                return {
-                  hero: {
-                     instanceId: updatedHero.id,
-                     itemId: updatedHero.itemId,
-                     itemType: updatedHero.itemType,
-                     customData: updatedHero.customData,
-                  },
+                  updatedHero: updatedHeroView,
+                  hero: updatedHeroView,
+                  consumed,
                   currency: rewardResult.currency,
+                  tutorialProgress: this.tutorialProgressService.normalize(
+                     tutorialProgressUpdate.storedTutorialProgress,
+                     player.statistics,
+                     player.updatedAt,
+                     [{ customData: updatedHero.customData }],
+                  ),
                   questUpdates,
                };
             }),
       });
    }
 
-   private mapShardCurrency(currency: 'normalShard' | 'eliteShard' | 'specialShard'): string {
+   private mapShardCurrency(
+      currency: 'normalShard' | 'eliteShard' | 'specialShard',
+   ): 'NormalShard' | 'EliteShard' | 'SpecialShard' {
       switch (currency) {
          case 'eliteShard':
             return 'EliteShard';
@@ -111,5 +194,45 @@ export class UpgradeHeroApplicationService {
          default:
             return 'NormalShard';
       }
+   }
+
+   private mapRewardCurrencyField(
+      rewardCurrency: 'NormalShard' | 'EliteShard' | 'SpecialShard',
+   ): 'normalShard' | 'eliteShard' | 'specialShard' {
+      switch (rewardCurrency) {
+         case 'EliteShard':
+            return 'eliteShard';
+         case 'SpecialShard':
+            return 'specialShard';
+         default:
+            return 'normalShard';
+      }
+   }
+
+   private isInsufficientResourceError(error: unknown): boolean {
+      if (!(error instanceof ApiErrorException)) {
+         return false;
+      }
+
+      const response = error.getResponse() as { code?: string };
+      return response?.code === ApiErrorCode.InsufficientResource;
+   }
+
+   private mapHero(hero: {
+      id: string;
+      itemId: string;
+      itemType: string;
+      itemClass?: string | null;
+      remainingUses: number;
+      customData: unknown;
+   }): InventoryHeroView {
+      return {
+         instanceId: hero.id,
+         itemId: hero.itemId,
+         itemType: hero.itemType,
+         itemClass: hero.itemClass ?? null,
+         remainingUses: hero.remainingUses,
+         customData: ((hero.customData as Record<string, string>) ?? {}) as Record<string, string>,
+      };
    }
 }

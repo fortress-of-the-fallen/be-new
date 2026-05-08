@@ -32,7 +32,7 @@ Không có body request.
   "data": {
     "heroes": [
       {
-        "instanceId": "hi_soldier_001",
+        "instanceId": "p_abc123_hi_soldier",
         "itemId": "Soldier",
         "itemType": "hero",
         "itemClass": "Unit",
@@ -46,7 +46,7 @@ Không có body request.
     ],
     "skills": [
       {
-        "instanceId": "si_pray_001",
+        "instanceId": "p_abc123_si_pray",
         "itemId": "Pray",
         "itemType": "skill",
         "itemClass": null,
@@ -83,7 +83,7 @@ curl -X GET 'http://127.0.0.1:3000/api/v1/inventory' \
 
 **Mô tả route**
 
-Tăng level hero lên 1, trừ currency theo rule config, và cập nhật quest progress liên quan.
+Tăng level hero lên 1, trừ resource theo active config, cập nhật quest progress liên quan, và đồng bộ `tutorialProgress` nếu đây là lần đầu player hoàn tất upgrade tutorial.
 
 **Authentication**
 
@@ -109,28 +109,70 @@ Body:
 {
   "success": true,
   "data": {
-    "hero": {
-      "instanceId": "hi_soldier_001",
+    "updatedHero": {
+      "instanceId": "p_abc123_hi_soldier",
       "itemId": "Soldier",
       "itemType": "hero",
+      "itemClass": "Unit",
+      "remainingUses": 0,
       "customData": {
         "lv": "2",
         "evlove_lv": "1",
         "evlove_value": "1"
       }
     },
+    "hero": {
+      "instanceId": "p_abc123_hi_soldier",
+      "itemId": "Soldier",
+      "itemType": "hero",
+      "itemClass": "Unit",
+      "remainingUses": 0,
+      "customData": {
+        "lv": "2",
+        "evlove_lv": "1",
+        "evlove_value": "1"
+      }
+    },
+    "consumed": [
+      {
+        "itemId": "GO",
+        "quantity": 50
+      },
+      {
+        "itemId": "NormalShard",
+        "quantity": 2
+      }
+    ],
     "currency": {
       "peasant": 0,
-      "gold": 420,
+      "gold": 530,
       "gem": 0,
-      "normalShard": 0,
+      "normalShard": 2,
       "eliteShard": 0,
       "specialShard": 0
+    },
+    "tutorialProgress": {
+      "finishOnboarding": true,
+      "finishIntro": true,
+      "finishFirstDeploy": true,
+      "finishFirstBattle": true,
+      "finishFirstDragUnit": true,
+      "finishFirstDeployArcher": true,
+      "finishFirstDeployBarricade": true,
+      "finishFirstDeployCavalry": true,
+      "finishUpgradeArcher": true,
+      "finishUpgradeBase": true,
+      "finishUpgradeUnitStat": true,
+      "finishPurchaseSkill": true,
+      "finishPvP": true,
+      "isDoneUpgradeUnitTutorial": true,
+      "updatedAt": "2026-05-04T10:00:00.000Z"
     },
     "questUpdates": [
       {
         "questId": 3,
         "type": "daily",
+        "actionId": "UPGRADE_UNIT",
         "progress": 1,
         "required": 1,
         "isCompleted": true,
@@ -141,6 +183,13 @@ Body:
   "serverTime": "2026-05-04T10:00:00.000Z"
 }
 ```
+
+Ghi chú:
+- Nếu sau mutation inventory đã có ít nhất một hero với `customData.lv > 1`, server sẽ trả `tutorialProgress.isDoneUpgradeUnitTutorial = true`.
+- Route này không tự thay đổi `finishOnboarding` hoặc `finishFirstDeploy`; hai cờ đó vẫn đi theo flow battle/tutorial tương ứng.
+- `updatedHero` là field canonical mới; `hero` vẫn được giữ như alias compatibility.
+- `consumed` luôn là danh sách resource đã tiêu thụ với số lượng dương và phải khớp persisted balance trong `currency`.
+- Theo active config hiện tại, tutorial upgrade cho hero normal từ level 1 lên 2 tiêu thụ `50 GO + 2 NormalShard`.
 
 **Error Messages**
 

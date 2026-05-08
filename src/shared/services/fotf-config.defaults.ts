@@ -113,8 +113,8 @@ export const DEFAULT_CONFIGS = {
       {
          id: 'Prophet',
          itemClass: 'Unit',
-         rarity: 'elite',
-         shardCurrency: 'eliteShard',
+         rarity: 'normal',
+         shardCurrency: 'normalShard',
       },
    ] satisfies HeroConfigRecord[],
    quest: [
@@ -267,13 +267,13 @@ export const DEFAULT_CONFIGS = {
       },
    ] satisfies RankRewardRuleRecord[],
    upgrade: [
-      { kind: 'heroUpgrade', itemId: 'Soldier', level: 1, goldCost: 80, shardCost: 0 },
+      { kind: 'heroUpgrade', itemId: 'Soldier', level: 1, goldCost: 50, shardCost: 2 },
       { kind: 'heroUpgrade', itemId: 'Soldier', level: 2, goldCost: 160, shardCost: 1 },
       { kind: 'heroUpgrade', itemId: 'Soldier', level: 3, goldCost: 240, shardCost: 2 },
-      { kind: 'heroUpgrade', itemId: 'Archer', level: 1, goldCost: 80, shardCost: 0 },
+      { kind: 'heroUpgrade', itemId: 'Archer', level: 1, goldCost: 50, shardCost: 2 },
       { kind: 'heroUpgrade', itemId: 'Archer', level: 2, goldCost: 160, shardCost: 1 },
       { kind: 'heroUpgrade', itemId: 'Archer', level: 3, goldCost: 240, shardCost: 2 },
-      { kind: 'heroUpgrade', itemId: 'Prophet', level: 1, goldCost: 100, shardCost: 0 },
+      { kind: 'heroUpgrade', itemId: 'Prophet', level: 1, goldCost: 50, shardCost: 2 },
       { kind: 'heroUpgrade', itemId: 'Prophet', level: 2, goldCost: 180, shardCost: 1 },
       { kind: 'heroUpgrade', itemId: 'Prophet', level: 3, goldCost: 260, shardCost: 2 },
       { kind: 'heroEvolve', itemId: 'Soldier', evolveLevel: 1, goldCost: 200, shardCost: 0, copiesRequired: 2 },

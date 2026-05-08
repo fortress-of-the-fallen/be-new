@@ -164,7 +164,7 @@ Ghi chú:
     "tutorialProgress": {
       "finishOnboarding": true,
       "finishIntro": true,
-      "finishFirstDeploy": true,
+      "finishFirstDeploy": false,
       "finishFirstBattle": true,
       "finishFirstDragUnit": true,
       "finishFirstDeployArcher": true,
@@ -175,7 +175,7 @@ Ghi chú:
       "finishUpgradeUnitStat": true,
       "finishPurchaseSkill": true,
       "finishPvP": true,
-      "isDoneUpgradeUnitTutorial": true,
+      "isDoneUpgradeUnitTutorial": false,
       "updatedAt": "2026-05-05T10:00:01.000Z"
     },
     "playerDelta": {
@@ -198,6 +198,34 @@ Ghi chú:
       {
         "questId": 1,
         "type": "daily",
+        "actionId": "PLAY_GAME",
+        "progress": 1,
+        "required": 3,
+        "isCompleted": false,
+        "rewardClaimed": false
+      },
+      {
+        "questId": 2,
+        "type": "daily",
+        "actionId": "WIN_BATTLE",
+        "progress": 1,
+        "required": 1,
+        "isCompleted": true,
+        "rewardClaimed": false
+      },
+      {
+        "questId": 101,
+        "type": "weekly",
+        "actionId": "PLAY_GAME",
+        "progress": 1,
+        "required": 10,
+        "isCompleted": false,
+        "rewardClaimed": false
+      },
+      {
+        "questId": 201,
+        "type": "achievement",
+        "actionId": "WIN_BATTLE",
         "progress": 1,
         "required": 3,
         "isCompleted": false,
@@ -213,7 +241,14 @@ Ghi chú:
 - `grantedRewards` là danh sách reward canonical cho client mới.
 - Response hiện vẫn giữ `rewards` như alias compatibility với contract cũ.
 - Khi `mode = PVE` và `result = WIN`, server tăng `statistics.stageCampaign`, `statistics.battlesPlayed`, `statistics.battlesWon`.
-- Ở chiến thắng onboarding đầu tiên, server đánh dấu `finishOnboarding`, `finishIntro`, `finishFirstDeploy`, `finishFirstBattle`.
+- `questUpdates` trả progress đã persist cho các quest daily, weekly, achievement bị ảnh hưởng bởi battle.
+- Ở chiến thắng onboarding đầu tiên, server chỉ đánh dấu active flag `finishOnboarding`.
+- Ở chiến thắng PVE kế tiếp khi `finishOnboarding=true` và `finishFirstDeploy=false`, server đánh dấu active flag `finishFirstDeploy`.
+- Battle finish không tự động đánh dấu `isDoneUpgradeUnitTutorial`; cờ này chỉ hoàn tất khi player thực sự upgrade được hero.
+- Với config mặc định hiện tại, `PVE + WIN` grant `80 GO + 15 XP + 1 NormalShard`.
+- Từ tài khoản mới, sau 2 chiến thắng `PVE` liên tiếp thì state đã verify runtime là `gold=660`, `normalShard=2`, `stageCampaign=3`, `battlesPlayed=2`, `battlesWon=2`; state này spend được ngay cho upgrade Normal hero `lv 1 -> 2`.
+- `GET /api/v1/me` gọi ngay sau battle finish phải trả cùng `currency` và `statistics` như response finish của trận đó.
+- Retry cùng payload với cùng `idempotencyKey` sẽ trả lại response gốc đã lưu và không tạo thêm reward transaction hay cộng reward lần hai.
 
 **Error Messages**
 

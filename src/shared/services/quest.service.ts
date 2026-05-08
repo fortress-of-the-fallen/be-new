@@ -32,6 +32,7 @@ export type QuestProgressRewardView = {
 export type QuestUpdateView = {
    questId: number;
    type: QuestType;
+   actionId: string;
    progress: number;
    required: number;
    isCompleted: boolean;
@@ -152,6 +153,7 @@ export class QuestService {
                { type: 'achievement', periodKey: period.achievementKey },
             ],
          },
+         orderBy: [{ type: 'asc' }, { questId: 'asc' }],
       });
 
       const updates: QuestUpdateView[] = [];
@@ -532,6 +534,7 @@ export class QuestService {
    private mapQuestUpdate(quest: {
       questId: number;
       type: string;
+      actionId: string;
       progress: number;
       required: number;
       claimed: boolean;
@@ -539,6 +542,7 @@ export class QuestService {
       return {
          questId: quest.questId,
          type: quest.type as QuestType,
+         actionId: quest.actionId,
          progress: quest.progress,
          required: quest.required,
          isCompleted: quest.progress >= quest.required,

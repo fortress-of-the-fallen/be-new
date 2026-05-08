@@ -70,6 +70,21 @@ export class FinishBattleApplicationService {
                   battle.mode,
                   req.result,
                );
+
+               const playerBeforeBattle = await db.player.findUnique({
+                  where: {
+                     id: playerId,
+                  },
+               });
+
+               if (!playerBeforeBattle) {
+                  throw new ApiErrorException(
+                     HttpStatus.NOT_FOUND,
+                     ApiErrorCode.NotFound,
+                     `Player ${playerId} was not found`,
+                  );
+               }
+
                const rewardResult = await this.rewardService.applyRewards({
                   db,
                   playerId,
@@ -79,11 +94,22 @@ export class FinishBattleApplicationService {
                   rewards: rewardRule.rewards,
                });
 
-               const player = await db.player.findUnique({
-                  where: {
-                     id: playerId,
-                  },
-               });
+               const [player, heroInventory] = await Promise.all([
+                  db.player.findUnique({
+                     where: {
+                        id: playerId,
+                     },
+                  }),
+                  db.playerInventoryItem.findMany({
+                     where: {
+                        playerId,
+                        itemType: 'hero',
+                     },
+                     select: {
+                        customData: true,
+                     },
+                  }),
+               ]);
 
                if (!player) {
                   throw new ApiErrorException(
@@ -98,19 +124,26 @@ export class FinishBattleApplicationService {
                   player.tutorialProgress,
                   statistics,
                   player.updatedAt,
+                  heroInventory,
                );
 
                if (battle.mode === 'PVE' && req.result === 'WIN') {
+                  const tutorialProgressUpdate = this.tutorialProgressService.applyPveBattleWin(
+                     playerBeforeBattle.tutorialProgress,
+                     playerBeforeBattle.statistics,
+                     playerBeforeBattle.updatedAt,
+                  );
+
                   statistics.stageCampaign += 1;
                   statistics.battlesPlayed += 1;
                   statistics.battlesWon += 1;
 
-                  const tutorialProgressUpdate = this.tutorialProgressService.applyOnboardingBattleWin(
-                     player.tutorialProgress,
+                  tutorialProgress = this.tutorialProgressService.normalize(
+                     tutorialProgressUpdate.storedTutorialProgress,
                      statistics,
                      player.updatedAt,
+                     heroInventory,
                   );
-                  tutorialProgress = tutorialProgressUpdate.tutorialProgress;
 
                   await db.player.update({
                      where: {
@@ -118,7 +151,7 @@ export class FinishBattleApplicationService {
                      },
                      data: {
                         statistics,
-                        tutorialProgress,
+                        tutorialProgress: tutorialProgressUpdate.storedTutorialProgress,
                      },
                   });
                }

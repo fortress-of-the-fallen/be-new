@@ -6,7 +6,6 @@ export class UpdateTutorialProgressReq {
    @ApiProperty({
       example: {
          finishOnboarding: true,
-         finishFirstBattle: true,
          finishFirstDeploy: true,
          isDoneUpgradeUnitTutorial: true,
       },

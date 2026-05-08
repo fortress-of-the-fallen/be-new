@@ -181,15 +181,42 @@ export class RewardService {
    private normalizeStatistics(value: unknown): CoreStats {
       const current = (value as Record<string, unknown>) ?? {};
       const score = Number(current.score ?? 0);
+      const coreStats = ((current.coreStats as Record<string, unknown>) ?? {}) as Record<
+         string,
+         unknown
+      >;
       return {
          ...current,
+         levelMap: Number(current.levelMap ?? 1),
+         wave: Number(current.wave ?? 1),
+         gameCoin: Number(current.gameCoin ?? 0),
+         expBattle: Number(current.expBattle ?? 0),
+         levelBattle: Number(current.levelBattle ?? 0),
          exp: Number(current.exp ?? 0),
          level: Number(current.level ?? 1),
+         statPointsAvailable: Number(current.statPointsAvailable ?? 0),
+         statPointsSpent: Number(current.statPointsSpent ?? 0),
+         coreStats: {
+            ...coreStats,
+            strength: Number(coreStats.strength ?? 0),
+            dexterity: Number(coreStats.dexterity ?? 0),
+            constitution: Number(coreStats.constitution ?? 0),
+            intelligence: Number(coreStats.intelligence ?? 0),
+            wisdom: Number(coreStats.wisdom ?? 0),
+            charisma: Number(coreStats.charisma ?? 0),
+         },
+         karma: Number(current.karma ?? 0),
+         affinity: Number(current.affinity ?? 0),
+         luck: Number(current.luck ?? 0),
+         resistance: Number(current.resistance ?? 0),
+         changedName: Number(current.changedName ?? 0),
          score,
          trophy: Number(current.trophy ?? score),
+         levelCastle: Number(current.levelCastle ?? 0),
          stageCampaign: Number(current.stageCampaign ?? 1),
          battlesPlayed: Number(current.battlesPlayed ?? 0),
          battlesWon: Number(current.battlesWon ?? 0),
+         lobbyUpgradeSpent: Number(current.lobbyUpgradeSpent ?? 0),
       };
    }
 

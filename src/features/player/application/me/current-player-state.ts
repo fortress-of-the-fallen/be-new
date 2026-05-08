@@ -21,23 +21,27 @@ export type CurrentPlayerQuest = {
    questId: number;
    type: string;
    actionId: string;
+   description: string;
    progress: number;
    required: number;
-   claimed: boolean;
-   periodKey: string;
+   isCompleted: boolean;
+   rewardClaimed: boolean;
+   rewards: Array<{
+      itemId: string;
+      quantity: number;
+      customData?: Record<string, string> | null;
+   }>;
 };
 
 export type CurrentPlayerQuestProgressReward = {
-   track: string;
    stage: number;
-   points: number;
-   periodKey: string;
+   claimed: boolean;
+   isUnlocked: boolean;
    reward: {
       itemId: string;
       quantity: number;
       customData?: Record<string, string> | null;
    };
-   claimed: boolean;
 };
 
 export type CurrentPlayerTutorialProgress = {
