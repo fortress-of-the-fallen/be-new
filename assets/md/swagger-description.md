@@ -102,6 +102,7 @@ Ghi chú:
 - Inventory Docs: [/docs/inventory](/docs/inventory)
 - Formation Docs: [/docs/formation](/docs/formation)
 - Lobby Docs: [/docs/lobby](/docs/lobby)
+- Shop Docs: [/docs/shop](/docs/shop)
 - Quest Docs: [/docs/quest](/docs/quest)
 - Battle Docs: [/docs/battle](/docs/battle)
 - Leaderboard Docs: [/docs/leaderboard](/docs/leaderboard)

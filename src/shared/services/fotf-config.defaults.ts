@@ -117,6 +117,28 @@ export type SpriteResourceRecord = {
    label: string;
 };
 
+export type ShopOfferRewardRecord = {
+   itemId: string;
+   minQty: number;
+   maxQty: number;
+   weight: number;
+};
+
+export type ShopOfferRecord = {
+   offerId: string;
+   displayName: string;
+   category: 'CHEST';
+   itemType: 'CHEST';
+   itemId: string;
+   iconId: string;
+   priceCurrency: 'GO' | 'GE' | 'NormalShard' | 'EliteShard' | 'SpecialShard';
+   priceAmount: number;
+   maxPurchasePerDay: number;
+   isAvailable: boolean;
+   rewardSlots?: number;
+   rewards: ShopOfferRewardRecord[];
+};
+
 export const ACTIVE_CONFIG_VERSION = '2026.05.02.1';
 
 const DEFAULT_CAMPAIGN_REWARDS: CampaignRewardRecord[] = Array.from(
@@ -356,6 +378,65 @@ export const DEFAULT_CONFIGS = {
       { level: 4, requiredExp: 350, rewards: [{ itemId: 'NormalShard', quantity: 3, customData: null }] },
    ] satisfies AccountLevelRecord[],
    lobby: DEFAULT_LOBBY_RULES satisfies LobbyConfigRecord[],
+   shop: [
+      {
+         offerId: 'chest_wooden',
+         displayName: 'Wooden Chest',
+         category: 'CHEST',
+         itemType: 'CHEST',
+         itemId: 'WoodenChest',
+         iconId: 'icon_chest_wooden',
+         priceCurrency: 'GO',
+         priceAmount: 80,
+         maxPurchasePerDay: 999,
+         isAvailable: true,
+         rewardSlots: 2,
+         rewards: [
+            { itemId: 'GO', minQty: 50, maxQty: 80, weight: 5000 },
+            { itemId: 'NormalShard', minQty: 1, maxQty: 2, weight: 3500 },
+            { itemId: 'EliteShard', minQty: 1, maxQty: 1, weight: 1300 },
+            { itemId: 'SpecialShard', minQty: 1, maxQty: 1, weight: 200 },
+         ],
+      },
+      {
+         offerId: 'chest_silver',
+         displayName: 'Silver Chest',
+         category: 'CHEST',
+         itemType: 'CHEST',
+         itemId: 'SilverChest',
+         iconId: 'icon_chest_silver',
+         priceCurrency: 'GE',
+         priceAmount: 120,
+         maxPurchasePerDay: 20,
+         isAvailable: true,
+         rewardSlots: 2,
+         rewards: [
+            { itemId: 'GO', minQty: 100, maxQty: 160, weight: 4000 },
+            { itemId: 'NormalShard', minQty: 2, maxQty: 4, weight: 3400 },
+            { itemId: 'EliteShard', minQty: 1, maxQty: 2, weight: 2000 },
+            { itemId: 'SpecialShard', minQty: 1, maxQty: 1, weight: 600 },
+         ],
+      },
+      {
+         offerId: 'chest_gold',
+         displayName: 'Gold Chest',
+         category: 'CHEST',
+         itemType: 'CHEST',
+         itemId: 'GoldChest',
+         iconId: 'icon_chest_gold',
+         priceCurrency: 'GE',
+         priceAmount: 240,
+         maxPurchasePerDay: 10,
+         isAvailable: true,
+         rewardSlots: 3,
+         rewards: [
+            { itemId: 'GO', minQty: 180, maxQty: 260, weight: 3200 },
+            { itemId: 'NormalShard', minQty: 3, maxQty: 5, weight: 3300 },
+            { itemId: 'EliteShard', minQty: 2, maxQty: 3, weight: 2500 },
+            { itemId: 'SpecialShard', minQty: 1, maxQty: 2, weight: 1000 },
+         ],
+      },
+   ] satisfies ShopOfferRecord[],
    spriteResource: [
       { id: 'normal', type: 'avatar', label: 'Normal' },
       { id: 'avatar_01', type: 'avatar', label: 'Avatar 01' },

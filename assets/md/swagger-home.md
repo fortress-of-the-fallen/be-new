@@ -32,6 +32,7 @@ Trang này là cổng điều hướng cho contract `/api/v1` hiện tại.
 - Inventory: [/docs/inventory](/docs/inventory)
 - Formation: [/docs/formation](/docs/formation)
 - Quest: [/docs/quest](/docs/quest)
+- Shop: [/docs/shop](/docs/shop)
 - Battle: [/docs/battle](/docs/battle)
 - Leaderboard: [/docs/leaderboard](/docs/leaderboard)
 - Lobby: [/docs/lobby](/docs/lobby)
@@ -77,6 +78,7 @@ Relevant public docs URLs:
 - Feature docs inventory: /docs/inventory
 - Feature docs formation: /docs/formation
 - Feature docs quest: /docs/quest
+- Feature docs shop: /docs/shop
 - Feature docs battle: /docs/battle
 - Feature docs leaderboard: /docs/leaderboard
 - Feature docs config: /docs/config

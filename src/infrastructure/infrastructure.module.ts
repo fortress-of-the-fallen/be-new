@@ -17,6 +17,7 @@ import { QuestModule } from 'src/features/quest/quest.module';
 import { InventoryModule } from 'src/features/inventory/inventory.module';
 import { BattleModule } from 'src/features/battle/battle.module';
 import { LobbyModule } from 'src/features/lobby/lobby.module';
+import { ShopModule } from 'src/features/shop/shop.module';
 
 const dependencies = [
    CacheModule,
@@ -37,6 +38,7 @@ const dependencies = [
    InventoryModule,
    BattleModule,
    LobbyModule,
+   ShopModule,
 ];
 
 @Module({

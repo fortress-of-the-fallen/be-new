@@ -4,6 +4,16 @@ import { AgendaBackgroundHandler } from './background-handler';
 import Agenda from 'agenda';
 import * as fs from 'fs';
 import * as path from 'path';
+
+function buildMongoAgendaUrl(): string {
+   const url = new URL(ConfigKeyConstant.DateBase.ConnectionUrl);
+   url.pathname = `/${ConfigKeyConstant.DateBase.BackgoundHanlderDbName}`;
+   if (!url.searchParams.get('authSource')) {
+      url.searchParams.set('authSource', 'admin');
+   }
+
+   return url.toString();
+}
 import { jobs } from 'src/shared/decorator/job.decorator';
 import { JobSchedulerService } from './job/job-scheduler.job';
 import { PersistenceModule } from '../persistence/persistence.module';
@@ -23,7 +33,7 @@ const agendaProvider = {
    useFactory: async () => {
       const agenda = new Agenda({
          db: {
-            address: `${ConfigKeyConstant.DateBase.ConnectionUrl}/${ConfigKeyConstant.DateBase.BackgoundHanlderDbName}?authSource=admin`,
+            address: buildMongoAgendaUrl(),
          },
       });
       return agenda;

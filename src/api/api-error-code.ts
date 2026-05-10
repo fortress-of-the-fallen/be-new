@@ -9,6 +9,8 @@ export enum ApiErrorCode {
    InsufficientGold = 'INSUFFICIENT_GOLD',
    InsufficientResource = 'INSUFFICIENT_RESOURCE',
    InsufficientResources = 'INSUFFICIENT_RESOURCES',
+   InsufficientCurrency = 'INSUFFICIENT_CURRENCY',
+   ShopOfferUnavailable = 'SHOP_OFFER_UNAVAILABLE',
    AlreadyClaimed = 'ALREADY_CLAIMED',
    HeroInstanceNotFound = 'HERO_INSTANCE_NOT_FOUND',
    MaxCastleLevel = 'MAX_CASTLE_LEVEL',

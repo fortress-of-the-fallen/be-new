@@ -16,6 +16,7 @@ import {
    QuestDefinitionRecord,
    RankRewardBracketRecord,
    RewardItem,
+   ShopOfferRecord,
    SkillPurchaseRuleRecord,
    SkillUpgradeRuleRecord,
    SpriteResourceRecord,
@@ -309,6 +310,25 @@ export class ConfigCatalogService {
             quantity,
             customData: null,
          }));
+   }
+
+
+   async getShopOffers(): Promise<ShopOfferRecord[]> {
+      return this.getConfigRecords<ShopOfferRecord>('shop');
+   }
+
+   async getShopOffer(offerId: string): Promise<ShopOfferRecord> {
+      const offers = await this.getShopOffers();
+      const offer = offers.find(record => record.offerId === offerId);
+      if (!offer) {
+         throw new ApiErrorException(
+            HttpStatus.CONFLICT,
+            ApiErrorCode.ShopOfferUnavailable,
+            'Offer is not available',
+         );
+      }
+
+      return offer;
    }
 
    async getAccountLevelRules(): Promise<AccountLevelRecord[]> {
