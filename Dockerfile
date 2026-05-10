@@ -1,6 +1,6 @@
 # ================================================
 # Stage 1: Builder
-FROM node:20.19.5-bullseye-slim AS builder
+FROM node:22-bullseye-slim AS builder
 
 WORKDIR /usr/src/app
 COPY package*.json ./
@@ -13,7 +13,7 @@ RUN rm -rf dist && npx prisma generate --generator client && npm run build
 
 # ================================================
 # Stage 2: Production
-FROM node:20.19.5-bullseye-slim
+FROM node:22-bullseye-slim
 
 WORKDIR /usr/src/app
 COPY package*.json ./

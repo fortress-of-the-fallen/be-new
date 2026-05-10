@@ -1,53 +1,43 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-TOKEN_FILE="$HOME/.docker_token"
-IMAGE_NAME="trkhang4444/fotf"
-IMAGE_TAG="1.0.0-be_staging"
-DOCKER_CONFIG_TMP="/tmp/docker-config"
+TOKEN_FILE="${HOME}/.docker_token"
+IMAGE_NAME="${IMAGE_NAME:-trkhang4444/fotf}"
+IMAGE_TAG="${IMAGE_TAG:-1.0.0-be_staging}"
+DOCKER_CONFIG_TMP="$(mktemp -d)"
 
-mkdir -p "$DOCKER_CONFIG_TMP"
+cleanup() {
+  rm -rf "${DOCKER_CONFIG_TMP}"
+}
+trap cleanup EXIT
 
-# Get Docker token
-if [ -f "$TOKEN_FILE" ]; then
-    read -p "A Docker token already exists locally. Use the existing token? (y/n): " USE_OLD
-    if [ "$USE_OLD" = "y" ]; then
-        DOCKER_TOKEN=$(cat "$TOKEN_FILE")
-    else
-        read -sp "Enter your Docker token: " DOCKER_TOKEN
-        echo ""
-        echo "$DOCKER_TOKEN" > "$TOKEN_FILE"
-        chmod 600 "$TOKEN_FILE"
-    fi
+if [[ -n "${DOCKER_TOKEN:-}" ]]; then
+  token="${DOCKER_TOKEN}"
+elif [[ -f "${TOKEN_FILE}" ]]; then
+  token="$(tr -d '\r\n' < "${TOKEN_FILE}")"
 else
-    read -sp "Enter your Docker token: " DOCKER_TOKEN
-    echo ""
-    echo "$DOCKER_TOKEN" > "$TOKEN_FILE"
-    chmod 600 "$TOKEN_FILE"
+  echo "Missing Docker token. Set DOCKER_TOKEN or create ${TOKEN_FILE}." >&2
+  exit 1
 fi
 
-if [ -z "$DOCKER_TOKEN" ]; then
-    echo "Error: Docker token is empty. Exiting."
-    exit 1
+if [[ -z "${token}" ]]; then
+  echo "Docker token is empty." >&2
+  exit 1
 fi
 
-# Build image
-sudo docker build -t "$IMAGE_NAME:$IMAGE_TAG" .
+echo "Building ${IMAGE_NAME}:${IMAGE_TAG}"
+docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 
-AUTH=$(echo -n "trkhang4444:$DOCKER_TOKEN" | base64)
-cat > "$DOCKER_CONFIG_TMP/config.json" <<EOF
+auth="$(printf 'trkhang4444:%s' "${token}" | base64 | tr -d '\n')"
+cat > "${DOCKER_CONFIG_TMP}/config.json" <<EOF
 {
   "auths": {
     "https://index.docker.io/v1/": {
-      "auth": "$AUTH"
+      "auth": "${auth}"
     }
   }
 }
 EOF
 
-
-# Push image
-sudo docker --config "$DOCKER_CONFIG_TMP" push "$IMAGE_NAME:$IMAGE_TAG"
-
-# Cleanup
-rm -rf "$DOCKER_CONFIG_TMP"
+echo "Pushing ${IMAGE_NAME}:${IMAGE_TAG}"
+docker --config "${DOCKER_CONFIG_TMP}" push "${IMAGE_NAME}:${IMAGE_TAG}"

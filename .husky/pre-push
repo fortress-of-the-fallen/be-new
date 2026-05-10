@@ -1,1 +1,2 @@
-"$(git rev-parse --show-toplevel)/scripts/linux/build"
+#!/bin/sh
+npm run build
