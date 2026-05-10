@@ -21,6 +21,7 @@ Trang này là cổng điều hướng cho contract `/api/v1` hiện tại.
 - Quest: [/swagger/quest](/swagger/quest)
 - Battle: [/swagger/battle](/swagger/battle)
 - Leaderboard: [/swagger/leaderboard](/swagger/leaderboard)
+- Lobby: [/swagger/lobby](/swagger/lobby)
 - Config: [/swagger/config](/swagger/config)
 
 ## Feature Docs
@@ -33,6 +34,7 @@ Trang này là cổng điều hướng cho contract `/api/v1` hiện tại.
 - Quest: [/docs/quest](/docs/quest)
 - Battle: [/docs/battle](/docs/battle)
 - Leaderboard: [/docs/leaderboard](/docs/leaderboard)
+- Lobby: [/docs/lobby](/docs/lobby)
 - Config: [/docs/config](/docs/config)
 
 ## Shared References
@@ -122,7 +124,10 @@ Relevant public docs URLs:
 - INVALID_CREDENTIALS
 - INSUFFICIENT_RESOURCE
 - ALREADY_CLAIMED
-- CONFIG_MISMATCH
+- CONFIG_VERSION_MISSING
+- CONFIG_VERSION_MISMATCH
+- INSUFFICIENT_GOLD
+- MAX_CASTLE_LEVEL
 - BATTLE_EXPIRED
 - BATTLE_ALREADY_FINISHED
 - IDEMPOTENCY_CONFLICT
@@ -144,7 +149,8 @@ Relevant public docs URLs:
 
 1.7 Config version checks
 - Config-dependent mutations require configVersion
-- Current server behavior rejects stale client configVersion with CONFIG_MISMATCH
+- Current server behavior rejects missing client configVersion with CONFIG_VERSION_MISSING
+- Current server behavior rejects stale client configVersion with CONFIG_VERSION_MISMATCH
 - This is enforced for:
   - battle start
   - inventory hero upgrade

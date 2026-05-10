@@ -5,7 +5,7 @@ Tài liệu này mô tả inventory read flow và các mutation cho hero/skill.
 - Base path: `/api/v1/inventory`
 - Protected routes: yêu cầu `Authorization: Bearer <accessToken>`
 - Thành công dùng envelope `{ success, data, serverTime }`
-- Các mutation phụ thuộc `configVersion` sẽ trả `CONFIG_MISMATCH` nếu client đang stale
+- Các mutation phụ thuộc `configVersion` sẽ trả `CONFIG_VERSION_MISSING` nếu client không gửi version, và `CONFIG_VERSION_MISMATCH` nếu version bị stale
 
 ## Routes
 
@@ -197,8 +197,9 @@ Ghi chú:
 | --- | --- |
 | `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
 | `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
-| `VALIDATION_FAILED` | Thiếu `configVersion`, thiếu `idempotencyKey`, hoặc body sai schema. |
-| `CONFIG_MISMATCH` | `configVersion` client không trùng active server config. |
+| `VALIDATION_FAILED` | Thiếu `idempotencyKey` hoặc body sai schema. |
+| `CONFIG_VERSION_MISSING` | Thiếu `configVersion` trong request body. |
+| `CONFIG_VERSION_MISMATCH` | `configVersion` client không trùng active server config. |
 | `NOT_FOUND` | Không tìm thấy hero instance hoặc upgrade rule tương ứng. |
 | `INSUFFICIENT_RESOURCE` | Không đủ gold/shard để trả cost. |
 | `IDEMPOTENCY_CONFLICT` | Cùng `idempotencyKey` nhưng payload khác. |
@@ -283,8 +284,9 @@ Body:
 | --- | --- |
 | `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
 | `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
-| `VALIDATION_FAILED` | Thiếu `configVersion`, thiếu `idempotencyKey`, hoặc body sai schema. |
-| `CONFIG_MISMATCH` | `configVersion` client không trùng active server config. |
+| `VALIDATION_FAILED` | Thiếu `idempotencyKey` hoặc body sai schema. |
+| `CONFIG_VERSION_MISSING` | Thiếu `configVersion` trong request body. |
+| `CONFIG_VERSION_MISMATCH` | `configVersion` client không trùng active server config. |
 | `NOT_FOUND` | Không tìm thấy hero instance hoặc evolve rule tương ứng. |
 | `INSUFFICIENT_RESOURCE` | Không đủ duplicate copies hoặc không đủ currency để evolve. |
 | `IDEMPOTENCY_CONFLICT` | Cùng `idempotencyKey` nhưng payload khác. |
@@ -362,8 +364,9 @@ Body:
 | --- | --- |
 | `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
 | `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
-| `VALIDATION_FAILED` | Thiếu `configVersion`, thiếu `idempotencyKey`, hoặc body sai schema. |
-| `CONFIG_MISMATCH` | `configVersion` client không trùng active server config. |
+| `VALIDATION_FAILED` | Thiếu `idempotencyKey` hoặc body sai schema. |
+| `CONFIG_VERSION_MISSING` | Thiếu `configVersion` trong request body. |
+| `CONFIG_VERSION_MISMATCH` | `configVersion` client không trùng active server config. |
 | `NOT_FOUND` | Không tìm thấy skill purchase rule cho `itemId`. |
 | `INSUFFICIENT_RESOURCE` | Không đủ currency để mua skill. |
 | `IDEMPOTENCY_CONFLICT` | Cùng `idempotencyKey` nhưng payload khác. |
@@ -441,8 +444,9 @@ Body:
 | --- | --- |
 | `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
 | `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
-| `VALIDATION_FAILED` | Thiếu `configVersion`, thiếu `idempotencyKey`, hoặc body sai schema. |
-| `CONFIG_MISMATCH` | `configVersion` client không trùng active server config. |
+| `VALIDATION_FAILED` | Thiếu `idempotencyKey` hoặc body sai schema. |
+| `CONFIG_VERSION_MISSING` | Thiếu `configVersion` trong request body. |
+| `CONFIG_VERSION_MISMATCH` | `configVersion` client không trùng active server config. |
 | `NOT_FOUND` | Không tìm thấy skill instance hoặc upgrade rule tương ứng. |
 | `INSUFFICIENT_RESOURCE` | Không đủ currency để upgrade skill. |
 | `IDEMPOTENCY_CONFLICT` | Cùng `idempotencyKey` nhưng payload khác. |

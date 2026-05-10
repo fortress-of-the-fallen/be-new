@@ -9,6 +9,7 @@ import { RewardService } from 'src/shared/services/reward.service';
 import { ConfigCatalogService } from 'src/shared/services/config-catalog.service';
 import { FinishBattleReq } from 'src/api/model/req/battle/finish-battle-req.model';
 import { TutorialProgressService } from 'src/shared/services/tutorial-progress.service';
+import { RewardItem } from 'src/shared/services/fotf-config.defaults';
 
 @Injectable()
 export class FinishBattleApplicationService {
@@ -66,11 +67,6 @@ export class FinishBattleApplicationService {
                   );
                }
 
-               const rewardRule = await this.configCatalogService.getRankRewardRule(
-                  battle.mode,
-                  req.result,
-               );
-
                const playerBeforeBattle = await db.player.findUnique({
                   where: {
                      id: playerId,
@@ -85,13 +81,19 @@ export class FinishBattleApplicationService {
                   );
                }
 
+               const battleRewards = await this.resolveBattleRewards(
+                  battle.mode,
+                  req,
+                  playerBeforeBattle,
+               );
+
                const rewardResult = await this.rewardService.applyRewards({
                   db,
                   playerId,
                   sourceType: 'battle',
                   sourceId: battleId,
                   idempotencyKey: req.idempotencyKey,
-                  rewards: rewardRule.rewards,
+                  rewards: battleRewards,
                });
 
                const [player, heroInventory] = await Promise.all([
@@ -120,38 +122,41 @@ export class FinishBattleApplicationService {
                }
 
                const statistics = this.normalizeStatistics(player.statistics);
-               let tutorialProgress = this.tutorialProgressService.normalize(
-                  player.tutorialProgress,
-                  statistics,
-                  player.updatedAt,
-                  heroInventory,
-               );
+               let storedTutorialProgress = player.tutorialProgress;
+               let tutorialProgressChanged = false;
 
-               if (battle.mode === 'PVE' && req.result === 'WIN') {
-                  const tutorialProgressUpdate = this.tutorialProgressService.applyPveBattleWin(
+               if (req.result === 'WIN') {
+                  const tutorialProgressUpdate = this.tutorialProgressService.applyBattleWin(
                      playerBeforeBattle.tutorialProgress,
                      playerBeforeBattle.statistics,
                      playerBeforeBattle.updatedAt,
                   );
 
+                  storedTutorialProgress = tutorialProgressUpdate.storedTutorialProgress;
+                  tutorialProgressChanged = tutorialProgressUpdate.changed;
+               }
+
+               if (battle.mode === 'PVE' && req.result === 'WIN') {
                   statistics.stageCampaign += 1;
                   statistics.battlesPlayed += 1;
                   statistics.battlesWon += 1;
+               }
 
-                  tutorialProgress = this.tutorialProgressService.normalize(
-                     tutorialProgressUpdate.storedTutorialProgress,
-                     statistics,
-                     player.updatedAt,
-                     heroInventory,
-                  );
+               const tutorialProgress = this.tutorialProgressService.normalize(
+                  storedTutorialProgress,
+                  statistics,
+                  player.updatedAt,
+                  heroInventory,
+               );
 
+               if ((battle.mode === 'PVE' && req.result === 'WIN') || tutorialProgressChanged) {
                   await db.player.update({
                      where: {
                         id: playerId,
                      },
                      data: {
-                        statistics,
-                        tutorialProgress: tutorialProgressUpdate.storedTutorialProgress,
+                        ...(battle.mode === 'PVE' && req.result === 'WIN' ? { statistics } : {}),
+                        ...(tutorialProgressChanged ? { tutorialProgress: storedTutorialProgress } : {}),
                      },
                   });
                }
@@ -210,5 +215,59 @@ export class FinishBattleApplicationService {
          battlesPlayed: Number(current.battlesPlayed ?? 0),
          battlesWon: Number(current.battlesWon ?? 0),
       };
+   }
+
+   private async resolveBattleRewards(
+      mode: string,
+      req: FinishBattleReq,
+      playerBeforeBattle: {
+         statistics: unknown;
+         tutorialProgress: unknown;
+         updatedAt: Date;
+      },
+   ): Promise<RewardItem[]> {
+      const statistics = this.normalizeStatistics(playerBeforeBattle.statistics);
+      const tutorialProgress = this.tutorialProgressService.normalize(
+         playerBeforeBattle.tutorialProgress,
+         statistics,
+         playerBeforeBattle.updatedAt,
+      );
+
+      if (mode === 'PVE') {
+         if (!tutorialProgress.finishOnboarding) {
+            return req.result === 'WIN'
+               ? [{ itemId: 'GO', quantity: 100, customData: null }]
+               : [];
+         }
+
+         return this.resolveCampaignRewards(
+            statistics.stageCampaign,
+            req.result,
+            req.playerPercent,
+         );
+      }
+
+      return this.configCatalogService.getRankBattleRewards(statistics.score, req.result);
+   }
+
+   private async resolveCampaignRewards(
+      stageCampaignBeforeFinish: number,
+      result: FinishBattleReq['result'],
+      playerPercent: number,
+   ): Promise<RewardItem[]> {
+      const stageForReward =
+         result === 'WIN'
+            ? Math.max(stageCampaignBeforeFinish - 1, 1)
+            : Math.max(stageCampaignBeforeFinish, 1);
+      const campaignRule = await this.configCatalogService.getCampaignRewardRule(stageForReward);
+
+      const goldReward =
+         result === 'WIN'
+            ? Math.floor(campaignRule.goldReward * (playerPercent + 0.5))
+            : result === 'DRAW'
+              ? Math.floor(campaignRule.goldReward * 0.75)
+              : Math.floor(campaignRule.goldReward / 2);
+
+      return goldReward > 0 ? [{ itemId: 'GO', quantity: goldReward, customData: null }] : [];
    }
 }

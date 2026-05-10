@@ -14,7 +14,12 @@ export class StartBattleApplicationService {
       private readonly leaderboardService: LeaderboardService,
    ) {}
 
-   async start(playerId: string, mode: 'PVP' | 'PVE', formationName: string, configVersion: string) {
+   async start(
+      playerId: string,
+      mode: 'PVP' | 'PVE' | 'FAKE_PVP',
+      formationName: string,
+      configVersion: string,
+   ) {
       await this.configCatalogService.assertConfigVersion(configVersion);
 
       const prismaClient = this.prisma as any;
@@ -35,15 +40,11 @@ export class StartBattleApplicationService {
          );
       }
 
-      const opponents = await this.leaderboardService.getMatchmakingOpponents(playerId, mode);
+      const opponents =
+         mode === 'PVP'
+            ? await this.leaderboardService.getMatchmakingOpponents(playerId, 'PVP')
+            : { opponents: [] };
       const opponent = mode === 'PVP' ? opponents.opponents[0] : undefined;
-      if (mode === 'PVP' && !opponent) {
-         throw new ApiErrorException(
-            HttpStatus.NOT_FOUND,
-            ApiErrorCode.NotFound,
-            'No matchmaking opponent is available',
-         );
-      }
 
       const battleId = `b_${IdentityHelper.generateNanoID(10)}`;
       const seed = Math.floor(Math.random() * 1_000_000_000);

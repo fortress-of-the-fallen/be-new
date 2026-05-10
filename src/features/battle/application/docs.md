@@ -31,9 +31,11 @@ Khởi tạo battle session server-side, sinh `battleId`, `seed`, snapshot oppon
 ```
 
 Ghi chú:
-- `mode`: `PVP` hoặc `PVE`.
+- `mode`: `PVP`, `PVE`, hoặc `FAKE_PVP`.
 - `formationName`: phải tồn tại ở player hiện tại.
-- `PVP` yêu cầu server tìm được ít nhất một opponent khả dụng.
+- `PVP` và `FAKE_PVP` đều mở được battle reward session theo flow rank/fake PvP; current Unity client đang gửi `mode = PVP`.
+- Với `PVP`, server có thể kèm snapshot `opponent` nếu đang tìm được candidate, nhưng không block session creation nếu chưa có opponent khả dụng.
+- `FAKE_PVP` vẫn được hỗ trợ như alias compatibility cho client/backend flow cũ.
 
 **Output Schema**
 
@@ -74,9 +76,10 @@ Ghi chú:
 | --- | --- |
 | `UNAUTHORIZED` | Thiếu bearer token hoặc token không hợp lệ/hết hạn. |
 | `FORBIDDEN` | Access token hợp lệ nhưng role không được phép. |
-| `VALIDATION_FAILED` | Body sai schema hoặc `mode` không nằm trong `PVP | PVE`. |
-| `CONFIG_MISMATCH` | `configVersion` client không trùng active server config. |
-| `NOT_FOUND` | Không tìm thấy formation hoặc không có opponent cho `PVP`. |
+| `VALIDATION_FAILED` | Body sai schema hoặc `mode` không nằm trong `PVP | PVE | FAKE_PVP`. |
+| `CONFIG_VERSION_MISSING` | Thiếu `configVersion` trong request body. |
+| `CONFIG_VERSION_MISMATCH` | `configVersion` client không trùng active server config. |
+| `NOT_FOUND` | Không tìm thấy formation. |
 
 **Sample curl**
 
@@ -125,7 +128,10 @@ Ghi chú:
 - `result`: `WIN | LOSE | DRAW`.
 - `durationSec`: `1..3600`.
 - `playerPercent`: `0..1`.
-- Với config mặc định hiện tại, `PVE + DRAW` không có reward rule nên sẽ trả `NOT_FOUND`.
+- `PVE` trước khi hoàn tất onboarding (`finishOnboarding=false`) chỉ grant `100 GO` khi `WIN`; `LOSE` hoặc `DRAW` không grant onboarding reward.
+- `PVE` sau onboarding tính `GO` theo campaign formula: `WIN = floor(baseGold * (playerPercent + 0.5))`, `DRAW = floor(baseGold * 0.75)`, `LOSE = floor(baseGold / 2)`.
+- Với active config mặc định hiện tại, `ConfigCampaign[1].goldReward = 200`, nên chiến thắng campaign ở stage reward 1 với `playerPercent = 0.96` sẽ grant `292 GO`.
+- `FAKE_PVP` và `PVP` dùng rank reward theo `score` trước khi finish; tân thủ `0..99 trophy` hiện grant đúng bảng Rookie trong spec.
 
 **Output Schema**
 
@@ -138,25 +144,35 @@ Ghi chú:
     "grantedRewards": [
       {
         "itemId": "GO",
-        "quantity": 100,
+        "quantity": 130,
         "customData": null
       },
       {
         "itemId": "XP",
-        "quantity": 20,
+        "quantity": 50,
         "customData": null
       },
       {
         "itemId": "Trophy",
-        "quantity": 3,
+        "quantity": 35,
+        "customData": null
+      },
+      {
+        "itemId": "NormalShard",
+        "quantity": 4,
+        "customData": null
+      },
+      {
+        "itemId": "EliteShard",
+        "quantity": 1,
         "customData": null
       }
     ],
     "statistics": {
-      "level": 1,
-      "exp": 20,
-      "score": 3,
-      "trophy": 3,
+      "level": 2,
+      "exp": 0,
+      "score": 35,
+      "trophy": 35,
       "stageCampaign": 2,
       "battlesPlayed": 1,
       "battlesWon": 1
@@ -164,7 +180,7 @@ Ghi chú:
     "tutorialProgress": {
       "finishOnboarding": true,
       "finishIntro": true,
-      "finishFirstDeploy": false,
+      "finishFirstDeploy": true,
       "finishFirstBattle": true,
       "finishFirstDragUnit": true,
       "finishFirstDeployArcher": true,
@@ -180,18 +196,18 @@ Ghi chú:
     },
     "playerDelta": {
       "levelBefore": 1,
-      "levelAfter": 1,
+      "levelAfter": 2,
       "scoreBefore": 0,
-      "scoreAfter": 3,
+      "scoreAfter": 35,
       "expBefore": 0,
-      "expAfter": 20
+      "expAfter": 0
     },
     "currency": {
       "peasant": 0,
-      "gold": 600,
+      "gold": 730,
       "gem": 0,
-      "normalShard": 1,
-      "eliteShard": 0,
+      "normalShard": 4,
+      "eliteShard": 1,
       "specialShard": 0
     },
     "questUpdates": [
@@ -214,20 +230,20 @@ Ghi chú:
         "rewardClaimed": false
       },
       {
-        "questId": 101,
+        "questId": 4,
         "type": "weekly",
         "actionId": "PLAY_GAME",
         "progress": 1,
-        "required": 10,
+        "required": 20,
         "isCompleted": false,
         "rewardClaimed": false
       },
       {
-        "questId": 201,
+        "questId": 8,
         "type": "achievement",
         "actionId": "WIN_BATTLE",
         "progress": 1,
-        "required": 3,
+        "required": 25,
         "isCompleted": false,
         "rewardClaimed": false
       }
@@ -240,13 +256,13 @@ Ghi chú:
 Ghi chú:
 - `grantedRewards` là danh sách reward canonical cho client mới.
 - Response hiện vẫn giữ `rewards` như alias compatibility với contract cũ.
-- Khi `mode = PVE` và `result = WIN`, server tăng `statistics.stageCampaign`, `statistics.battlesPlayed`, `statistics.battlesWon`.
-- `questUpdates` trả progress đã persist cho các quest daily, weekly, achievement bị ảnh hưởng bởi battle.
-- Ở chiến thắng onboarding đầu tiên, server chỉ đánh dấu active flag `finishOnboarding`.
-- Ở chiến thắng PVE kế tiếp khi `finishOnboarding=true` và `finishFirstDeploy=false`, server đánh dấu active flag `finishFirstDeploy`.
-- Battle finish không tự động đánh dấu `isDoneUpgradeUnitTutorial`; cờ này chỉ hoàn tất khi player thực sự upgrade được hero.
-- Với config mặc định hiện tại, `PVE + WIN` grant `80 GO + 15 XP + 1 NormalShard`.
-- Từ tài khoản mới, sau 2 chiến thắng `PVE` liên tiếp thì state đã verify runtime là `gold=660`, `normalShard=2`, `stageCampaign=3`, `battlesPlayed=2`, `battlesWon=2`; state này spend được ngay cho upgrade Normal hero `lv 1 -> 2`.
+- Mọi battle `WIN` sẽ đẩy active tutorial progress thêm tối đa một bước (`finishOnboarding` rồi `finishFirstDeploy`); battle finish không bao giờ tự set `isDoneUpgradeUnitTutorial`.
+- Chỉ `PVE + WIN` mới tăng `statistics.stageCampaign`, `statistics.battlesPlayed`, `statistics.battlesWon`.
+- `FAKE_PVP` và `PVP` không coi là campaign battle, nhưng vẫn persist reward theo rank bracket và có thể hoàn tất tutorial battle 2 nếu đó là chiến thắng kế tiếp sau onboarding.
+- `XP` được xử lý theo exp-inside-current-level: ở ngưỡng exact threshold (`0 + 50 XP` với level 1 hiện tại), response phải trả `statistics.level = 2` và `statistics.exp = 0`, không được giữ `level = 1, exp = 50`.
+- `questUpdates` trả progress đã persist cho các quest daily, weekly, achievement thuộc active `ConfigQuest`.
+- Ở chiến thắng onboarding đầu tiên, server chỉ grant `100 GO` và đánh dấu active flag `finishOnboarding`.
+- Sau đó, chiến thắng fake PvP kiểu Rookie sẽ grant base rank reward `30 GO + 50 XP + 35 Trophy + 4 NormalShard + 1 EliteShard`; nếu trận đó đồng thời đủ XP lên level 2 thì response runtime hiện tại sẽ merge thêm reward level-up từ `accountLevel`, nên `grantedRewards` thực tế là `GO 130 + XP 50 + Trophy 35 + 4 NormalShard + 1 EliteShard`.
 - `GET /api/v1/me` gọi ngay sau battle finish phải trả cùng `currency` và `statistics` như response finish của trận đó.
 - Retry cùng payload với cùng `idempotencyKey` sẽ trả lại response gốc đã lưu và không tạo thêm reward transaction hay cộng reward lần hai.
 

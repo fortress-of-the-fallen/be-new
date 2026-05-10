@@ -68,13 +68,20 @@ export class QuestService {
    async getState(playerId: string, db: PrismaDbClient = this.prisma): Promise<QuestStateView> {
       const period = this.getPeriods(new Date());
       const definitions = await this.configCatalogService.getQuestDefinitions();
+      const activeQuestIds = definitions.quests.map(definition => definition.id);
+      const activeProgressRewardKeys = new Set(
+         definitions.progressRewards.map(definition => `${definition.track}:${definition.stage}`),
+      );
 
       await this.ensureState(db, playerId, period, definitions);
 
-      const [quests, rewards] = await Promise.all([
+      const [questRows, rewardRows] = await Promise.all([
          db.playerQuest.findMany({
             where: {
                playerId,
+               questId: {
+                  in: activeQuestIds,
+               },
                OR: [
                   { type: 'daily', periodKey: period.daily.key },
                   { type: 'weekly', periodKey: period.weekly.key },
@@ -94,6 +101,11 @@ export class QuestService {
             orderBy: [{ track: 'asc' }, { stage: 'asc' }],
          }),
       ]);
+
+      const quests = questRows.filter(quest => activeQuestIds.includes(quest.questId));
+      const rewards = rewardRows.filter(reward =>
+         activeProgressRewardKeys.has(`${reward.track}:${reward.stage}`),
+      );
 
       return {
          daily: {
@@ -134,6 +146,7 @@ export class QuestService {
    ): Promise<QuestUpdateView[]> {
       const period = this.getPeriods(new Date());
       const definitions = await this.configCatalogService.getQuestDefinitions();
+      const activeQuestIds = definitions.quests.map(definition => definition.id);
       await this.ensureState(db, playerId, period, definitions);
 
       const totals = actions.reduce<Record<string, number>>((acc, action) => {
@@ -144,6 +157,9 @@ export class QuestService {
       const quests = await db.playerQuest.findMany({
          where: {
             playerId,
+            questId: {
+               in: activeQuestIds,
+            },
             actionId: {
                in: Object.keys(totals),
             },
@@ -348,6 +364,17 @@ export class QuestService {
          );
       }
 
+      const definition = definitions.progressRewards.find(
+         item => item.track === track && item.stage === stage,
+      );
+      if (!definition) {
+         throw new ApiErrorException(
+            HttpStatus.NOT_FOUND,
+            ApiErrorCode.NotFound,
+            `Progress reward definition ${track}:${stage} was not found`,
+         );
+      }
+
       if (reward.claimed) {
          throw new ApiErrorException(
             HttpStatus.CONFLICT,
@@ -378,9 +405,7 @@ export class QuestService {
          },
       });
 
-      const grantedRewards = Array.isArray(reward.reward)
-         ? ((reward.reward as RewardItem[]) ?? [])
-         : [reward.reward as RewardItem];
+      const grantedRewards = definition.reward;
 
       const rewardResult = await this.rewardService.applyRewards({
          db,

@@ -76,9 +76,12 @@ Ghi chú:
 | `NOT_FOUND` | Không tìm thấy resource, config, battle, formation, player, hero, skill hoặc leaderboard row. |
 | `USERNAME_TAKEN` | Username đã được đăng ký. |
 | `INVALID_CREDENTIALS` | Sai username/password hoặc account không active. |
+| `INSUFFICIENT_GOLD` | Không đủ gold cho mutation yêu cầu spend gold cố định, ví dụ castle upgrade. |
 | `INSUFFICIENT_RESOURCE` | Không đủ gold/gem/shard hoặc thiếu duplicate copies. |
 | `ALREADY_CLAIMED` | Quest reward hoặc progress reward đã được claim. |
-| `CONFIG_MISMATCH` | `configVersion` client không khớp active version trên server. |
+| `MAX_CASTLE_LEVEL` | Castle tier hiện tại đã đạt max level/max accumulated cost. |
+| `CONFIG_VERSION_MISSING` | Mutation phụ thuộc config không gửi `configVersion`. |
+| `CONFIG_VERSION_MISMATCH` | `configVersion` client không khớp active version trên server. |
 | `BATTLE_EXPIRED` | Battle session đã quá hạn finish/claim reward. |
 | `BATTLE_ALREADY_FINISHED` | Battle session đã được finish trước đó. |
 | `IDEMPOTENCY_CONFLICT` | Cùng `idempotencyKey` nhưng payload khác request trước. |
@@ -98,6 +101,7 @@ Ghi chú:
 - Character Docs: [/docs/character](/docs/character)
 - Inventory Docs: [/docs/inventory](/docs/inventory)
 - Formation Docs: [/docs/formation](/docs/formation)
+- Lobby Docs: [/docs/lobby](/docs/lobby)
 - Quest Docs: [/docs/quest](/docs/quest)
 - Battle Docs: [/docs/battle](/docs/battle)
 - Leaderboard Docs: [/docs/leaderboard](/docs/leaderboard)

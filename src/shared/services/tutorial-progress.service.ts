@@ -46,7 +46,7 @@ export class TutorialProgressService {
          }
       }
 
-      if (this.hasLegacyProgress(statistics)) {
+      if (typeof source.finishOnboarding !== 'boolean' && this.hasLegacyProgress(statistics)) {
          normalized.finishOnboarding = true;
       }
 
@@ -160,7 +160,7 @@ export class TutorialProgressService {
       return this.normalize(nextStored, player.statistics, player.updatedAt, heroes);
    }
 
-   applyPveBattleWin(
+   applyBattleWin(
       value: unknown,
       statistics: unknown,
       fallbackUpdatedAt?: Date,
@@ -184,6 +184,17 @@ export class TutorialProgressService {
          storedTutorialProgress: nextStored,
          changed: this.hasStoredStateChanged(value, nextStored),
       };
+   }
+
+   applyPveBattleWin(
+      value: unknown,
+      statistics: unknown,
+      fallbackUpdatedAt?: Date,
+   ): {
+      storedTutorialProgress: Record<string, unknown>;
+      changed: boolean;
+   } {
+      return this.applyBattleWin(value, statistics, fallbackUpdatedAt);
    }
 
    applyUpgradeTutorialCompletion(

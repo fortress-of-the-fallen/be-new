@@ -43,6 +43,26 @@ describe('TutorialProgressService', () => {
       expect(tutorialProgress.isDoneUpgradeUnitTutorial).toBe(false);
    });
 
+   it('does not auto-complete onboarding for a new account with explicit false flag', () => {
+      const tutorialProgress = service.normalize(
+         {
+            finishOnboarding: false,
+            updatedAt: '2026-05-07T00:00:00.000Z',
+         },
+         {
+            stageCampaign: 1,
+            battlesWon: 0,
+            battlesPlayed: 0,
+            level: 1,
+            exp: 15,
+         },
+         new Date('2026-05-07T00:00:00.000Z'),
+      );
+
+      expect(tutorialProgress.finishOnboarding).toBe(false);
+      expect(tutorialProgress.finishFirstDeploy).toBe(false);
+   });
+
    it('infers tutorial battle 2 completion from progressed campaign state', () => {
       const tutorialProgress = service.normalize(
          {},

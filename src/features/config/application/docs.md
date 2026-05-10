@@ -34,8 +34,10 @@ Không có body request.
       "hero": "2026.05.02.1",
       "quest": "2026.05.02.1",
       "rank": "2026.05.02.1",
+      "campaign": "2026.05.02.1",
       "upgrade": "2026.05.02.1",
       "accountLevel": "2026.05.02.1",
+      "lobby": "2026.05.02.1",
       "spriteResource": "2026.05.02.1"
     }
   },
@@ -80,8 +82,10 @@ Tên config hiện có trong defaults:
 - `hero`
 - `quest`
 - `rank`
+- `campaign`
 - `upgrade`
 - `accountLevel`
+- `lobby`
 - `spriteResource`
 
 **Output Schema**
@@ -126,3 +130,4 @@ curl -X GET 'http://127.0.0.1:3000/api/v1/configs/hero?version=2026.05.02.1'
 - API Portal: [/](/)
 - Swagger Config: [/swagger/config](/swagger/config)
 - Battle Docs: [/docs/battle](/docs/battle)
+- Lobby Docs: [/docs/lobby](/docs/lobby)

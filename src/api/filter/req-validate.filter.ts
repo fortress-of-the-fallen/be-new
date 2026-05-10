@@ -15,7 +15,7 @@ class ReqValidateFilter implements ExceptionFilter {
 
       this.logger.error(`Validation failed: ${exception.message}`, exception.stack);
       response.status(status).json(
-         buildErrorResponse(ApiErrorCode.ValidationFailed, exception.message, {
+         buildErrorResponse(exception.errorCode ?? ApiErrorCode.ValidationFailed, exception.message, {
             validations: exception.validationErrors || [],
          }),
       );

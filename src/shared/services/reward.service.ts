@@ -80,24 +80,35 @@ export class RewardService {
       };
 
       const mergedRewards = this.mergeRewards(input.rewards);
-      this.applyRewardList(currency, statistics, mergedRewards);
+      const appliedRewards: RewardItem[] = [];
+      let pendingRewards = mergedRewards;
 
-      const levelUpRewards = await this.collectLevelUpRewards(
-         playerDelta.levelBefore,
-         statistics.exp,
-      );
-      if (levelUpRewards.length > 0) {
-         this.applyRewardList(currency, statistics, levelUpRewards);
+      while (pendingRewards.length > 0) {
+         this.applyRewardList(currency, statistics, pendingRewards);
+         appliedRewards.push(...pendingRewards);
+
+         const levelProgression = await this.resolveLevelProgression(
+            statistics.level,
+            statistics.exp,
+         );
+
+         statistics.level = levelProgression.level;
+         statistics.exp = levelProgression.exp;
+
+         if (levelProgression.rewards.length === 0) {
+            break;
+         }
+
+         pendingRewards = levelProgression.rewards;
       }
 
-      statistics.level = await this.resolveLevel(statistics.exp);
       statistics.trophy = statistics.score;
 
       playerDelta.levelAfter = statistics.level;
       playerDelta.scoreAfter = statistics.score;
       playerDelta.expAfter = statistics.exp;
 
-      const finalRewards = this.mergeRewards([...mergedRewards, ...levelUpRewards]);
+      const finalRewards = this.mergeRewards(appliedRewards);
 
       await db.player.update({
          where: {
@@ -266,30 +277,68 @@ export class RewardService {
       }
    }
 
-   private async collectLevelUpRewards(
-      previousLevel: number,
-      expAfterBaseRewards: number,
-   ): Promise<RewardItem[]> {
+   private async resolveLevelProgression(
+      currentLevel: number,
+      currentExp: number,
+   ): Promise<{
+      level: number;
+      exp: number;
+      rewards: RewardItem[];
+   }> {
       const rules = await this.configCatalogService.getAccountLevelRules();
-      const newLevel = this.resolveLevelFromRules(rules, expAfterBaseRewards);
-      const rewards = rules
-         .filter(rule => rule.level > previousLevel && rule.level <= newLevel)
-         .flatMap(rule => rule.rewards ?? []);
-
-      return this.mergeRewards(rewards);
+      return this.resolveLevelProgressionFromRules(rules, currentLevel, currentExp);
    }
 
-   private async resolveLevel(exp: number): Promise<number> {
-      const rules = await this.configCatalogService.getAccountLevelRules();
-      return this.resolveLevelFromRules(rules, exp);
+   private resolveLevelProgressionFromRules(
+      rules: AccountLevelRecord[],
+      currentLevel: number,
+      currentExp: number,
+   ): {
+      level: number;
+      exp: number;
+      rewards: RewardItem[];
+   } {
+      let level = currentLevel;
+      let exp = currentExp;
+      const rewards: RewardItem[] = [];
+
+      while (true) {
+         const requiredExp = this.getRequiredExpForLevel(rules, level);
+         if (requiredExp === null || requiredExp <= 0) {
+            break;
+         }
+
+         if (exp < requiredExp) {
+            break;
+         }
+
+         exp -= requiredExp;
+         level += 1;
+
+         const reachedRule = rules.find(rule => rule.level === level);
+         rewards.push(...(reachedRule?.rewards ?? []));
+      }
+
+      return {
+         level,
+         exp,
+         rewards: this.mergeRewards(rewards),
+      };
    }
 
-   private resolveLevelFromRules(rules: AccountLevelRecord[], exp: number): number {
-      return (
-         rules
-            .filter(rule => exp >= rule.requiredExp)
-            .sort((left, right) => right.level - left.level)[0]?.level ?? 1
-      );
+   private getRequiredExpForLevel(rules: AccountLevelRecord[], level: number): number | null {
+      const nextRule = rules.find(rule => rule.level === level + 1);
+      if (!nextRule) {
+         return null;
+      }
+
+      const currentRule = [...rules]
+         .reverse()
+         .find(rule => rule.level <= level);
+      const currentThreshold = currentRule?.requiredExp ?? 0;
+      const requiredExp = nextRule.requiredExp - currentThreshold;
+
+      return requiredExp > 0 ? requiredExp : null;
    }
 
    private mergeRewards(rewards: RewardItem[]): RewardItem[] {

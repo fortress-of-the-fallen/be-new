@@ -82,6 +82,8 @@ Ghi chú:
 - `resetAt` là timestamp reset kế tiếp do server quyết định; trước mốc này backend không tự reset progress về `0`.
 - Quest item canonical dùng `type`, `actionId`, `isCompleted`, `rewardClaimed`.
 - `GET /me` và `GET /quests` dùng cùng quest state persisted.
+- Active `ConfigQuest` hiện tại đang map daily quests `1..3`, weekly quests `4..6`, achievement quests `7..9`.
+- Quest `3` hiện grant `NormalShard x5` từ config active; backend không còn dùng reward cũ `GE x25`.
 
 **Error Messages**
 
@@ -127,7 +129,9 @@ Body:
 Ghi chú:
 - Claim chỉ thành công khi quest đã complete và chưa được claim.
 - `dailyPoints` hoặc `weeklyPoints` là điểm sau claim, dùng để unlock progress reward của track tương ứng.
+- Nếu response có `currency` thì mọi field currency đã bao gồm `grantedRewards` của claim đó; client không cộng thêm lần nữa.
 - `GET /quests` sau claim sẽ trả `rewardClaimed = true`.
+- Quest hoàn thành nhưng chưa claim sẽ tiếp tục claim được sau app restart cho đến khi claim thành công.
 
 **Output Schema**
 
@@ -164,11 +168,6 @@ Ghi chú:
   "serverTime": "2026-05-04T10:00:00.000Z"
 }
 ```
-
-Ghi chú:
-- `{track}` chỉ chấp nhận `daily` hoặc `weekly`.
-- Claim thành công sẽ persist `claimed = true` cho stage đó.
-- `GET /quests` sau claim sẽ trả stage tương ứng với `claimed = true`.
 
 **Error Messages**
 
@@ -247,6 +246,12 @@ Body:
   "serverTime": "2026-05-04T10:00:00.000Z"
 }
 ```
+
+Ghi chú:
+- `{track}` chỉ chấp nhận `daily` hoặc `weekly`.
+- Claim chỉ thành công khi điểm hiện tại của track lớn hơn hoặc bằng `stage`.
+- Nếu response có `currency` thì state trả về đã bao gồm `grantedRewards` của progress reward đó.
+- `GET /quests` sau claim sẽ trả stage tương ứng với `claimed = true`.
 
 **Error Messages**
 

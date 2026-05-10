@@ -10,7 +10,12 @@ export class BattleApplicationService {
       private readonly finishBattleApplicationService: FinishBattleApplicationService,
    ) {}
 
-   async start(playerId: string, mode: 'PVP' | 'PVE', formationName: string, configVersion: string) {
+   async start(
+      playerId: string,
+      mode: 'PVP' | 'PVE' | 'FAKE_PVP',
+      formationName: string,
+      configVersion: string,
+   ) {
       return this.startBattleApplicationService.start(playerId, mode, formationName, configVersion);
    }
 

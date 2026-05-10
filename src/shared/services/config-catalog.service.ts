@@ -5,14 +5,17 @@ import { ApiErrorException } from 'src/shared/exception/api-error.exception';
 import {
    AccountLevelRecord,
    ACTIVE_CONFIG_VERSION,
+   CampaignRewardRecord,
    DEFAULT_CONFIGS,
    HeroConfigRecord,
    HeroEvolveRuleRecord,
    HeroUpgradeRuleRecord,
+   LobbyConfigRecord,
    ProfileRenameRuleRecord,
    ProgressRewardDefinitionRecord,
    QuestDefinitionRecord,
-   RankRewardRuleRecord,
+   RankRewardBracketRecord,
+   RewardItem,
    SkillPurchaseRuleRecord,
    SkillUpgradeRuleRecord,
    SpriteResourceRecord,
@@ -61,8 +64,8 @@ export class ConfigCatalogService {
       if (version !== activeVersion) {
          throw new ApiErrorException(
             HttpStatus.CONFLICT,
-            ApiErrorCode.ConfigMismatch,
-            'Client config version does not match the active server config',
+            ApiErrorCode.ConfigVersionMismatch,
+            'Requested configVersion is not active or not available',
             {
                activeVersion,
                receivedVersion: version,
@@ -240,26 +243,93 @@ export class ConfigCatalogService {
       };
    }
 
-   async getRankRewardRule(
-      mode: RankRewardRuleRecord['mode'],
-      result: RankRewardRuleRecord['result'],
-   ): Promise<RankRewardRuleRecord> {
-      const rules = await this.getConfigRecords<RankRewardRuleRecord>('rank');
-      const rule = rules.find(record => record.mode === mode && record.result === result);
+   async getCampaignRewardRule(stage: number): Promise<CampaignRewardRecord> {
+      const rules = (await this.getConfigRecords<CampaignRewardRecord>('campaign')).sort(
+         (left, right) => left.stage - right.stage,
+      );
+      const rule = [...rules].reverse().find(record => stage >= record.stage) ?? rules[0];
       if (!rule) {
          throw new ApiErrorException(
             HttpStatus.NOT_FOUND,
             ApiErrorCode.NotFound,
-            `Battle reward rule for mode ${mode} result ${result} was not found`,
+            `Campaign reward rule for stage ${stage} was not found`,
          );
       }
 
       return rule;
    }
 
+   async getRankRewardRule(score: number): Promise<RankRewardBracketRecord> {
+      const rules = (await this.getConfigRecords<RankRewardBracketRecord>('rank')).sort(
+         (left, right) => left.MinTrophy - right.MinTrophy,
+      );
+      const rule =
+         rules.find(record => score >= record.MinTrophy && score <= record.MaxTrophy) ??
+         [...rules].reverse().find(record => score >= record.MinTrophy) ??
+         rules[0];
+      if (!rule) {
+         throw new ApiErrorException(
+            HttpStatus.NOT_FOUND,
+            ApiErrorCode.NotFound,
+            `Rank reward rule for score ${score} was not found`,
+         );
+      }
+
+      return rule;
+   }
+
+   async getRankBattleRewards(
+      score: number,
+      result: 'WIN' | 'LOSE' | 'DRAW',
+   ): Promise<RewardItem[]> {
+      const rule = await this.getRankRewardRule(score);
+      const rewardEntries: Array<[RewardItem['itemId'], number]> =
+         result === 'WIN'
+            ? [
+                 ['GO', rule.WinGolds],
+                 ['XP', rule.WinXP],
+                 ['Trophy', rule.WinTrophy],
+                 ['NormalShard', rule.WinNormalShard],
+                 ['EliteShard', rule.WinEliteShard],
+                 ['SpecialShard', rule.WinSpecialShard],
+              ]
+            : [
+                 ['GO', rule.LoseGolds],
+                 ['XP', rule.LoseXP],
+                 ['Trophy', rule.LoseTrophy],
+                 ['NormalShard', rule.LoseNormalShard],
+                 ['EliteShard', rule.LoseEliteShard],
+                 ['SpecialShard', rule.LoseSpecialShard],
+              ];
+
+      return rewardEntries
+         .filter(([, quantity]) => quantity !== 0)
+         .map(([itemId, quantity]) => ({
+            itemId,
+            quantity,
+            customData: null,
+         }));
+   }
+
    async getAccountLevelRules(): Promise<AccountLevelRecord[]> {
       const rules = await this.getConfigRecords<AccountLevelRecord>('accountLevel');
       return rules.sort((left, right) => left.level - right.level);
+   }
+
+   async getLobbyUpgradeRules(tier: number): Promise<LobbyConfigRecord[]> {
+      const rules = (await this.getConfigRecords<LobbyConfigRecord>('lobby'))
+         .filter(rule => rule.Tier === tier)
+         .sort((left, right) => left.Level - right.Level);
+
+      if (rules.length === 0) {
+         throw new ApiErrorException(
+            HttpStatus.NOT_FOUND,
+            ApiErrorCode.NotFound,
+            `Lobby config for tier ${tier} was not found`,
+         );
+      }
+
+      return rules;
    }
 
    async getAvatarIds(): Promise<string[]> {

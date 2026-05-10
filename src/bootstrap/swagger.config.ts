@@ -62,6 +62,7 @@ export async function setupSwagger(app: INestApplication): Promise<void> {
       'Formation',
       'Quest',
       'Battle',
+      'Lobby',
       'Leaderboard',
       'Config',
    ];

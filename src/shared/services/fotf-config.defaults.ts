@@ -76,16 +76,39 @@ export type ProfileRenameRuleRecord = {
    cost: number;
 };
 
-export type RankRewardRuleRecord = {
-   mode: 'PVP' | 'PVE';
-   result: 'WIN' | 'LOSE' | 'DRAW';
-   rewards: RewardItem[];
+export type CampaignRewardRecord = {
+   stage: number;
+   goldReward: number;
+};
+
+export type RankRewardBracketRecord = {
+   name: string;
+   MinTrophy: number;
+   MaxTrophy: number;
+   WinGolds: number;
+   WinXP: number;
+   WinTrophy: number;
+   WinNormalShard: number;
+   WinEliteShard: number;
+   WinSpecialShard: number;
+   LoseGolds: number;
+   LoseXP: number;
+   LoseTrophy: number;
+   LoseNormalShard: number;
+   LoseEliteShard: number;
+   LoseSpecialShard: number;
 };
 
 export type AccountLevelRecord = {
    level: number;
    requiredExp: number;
    rewards?: RewardItem[];
+};
+
+export type LobbyConfigRecord = {
+   Tier: number;
+   Level: number;
+   CostTotal: number;
 };
 
 export type SpriteResourceRecord = {
@@ -95,6 +118,22 @@ export type SpriteResourceRecord = {
 };
 
 export const ACTIVE_CONFIG_VERSION = '2026.05.02.1';
+
+const DEFAULT_CAMPAIGN_REWARDS: CampaignRewardRecord[] = Array.from(
+   { length: 100 },
+   (_, index) => ({
+      stage: index + 1,
+      goldReward: 200,
+   }),
+);
+
+const DEFAULT_LOBBY_RULES: LobbyConfigRecord[] = [
+   { Tier: 1, Level: 1, CostTotal: 125 },
+   { Tier: 1, Level: 2, CostTotal: 375 },
+   { Tier: 1, Level: 3, CostTotal: 750 },
+   { Tier: 1, Level: 4, CostTotal: 1250 },
+   { Tier: 1, Level: 5, CostTotal: 2000 },
+];
 
 export const DEFAULT_CONFIGS = {
    hero: [
@@ -133,7 +172,7 @@ export const DEFAULT_CONFIGS = {
          questActionId: 'WIN_BATTLE',
          desc: 'Win 1 battle',
          required: 1,
-         reward: [{ itemId: 'GO', quantity: 100, customData: null }],
+         reward: [{ itemId: 'GO', quantity: 150, customData: null }],
          points: 2,
       },
       {
@@ -142,34 +181,59 @@ export const DEFAULT_CONFIGS = {
          questActionId: 'UPGRADE_UNIT',
          desc: 'Upgrade 1 hero',
          required: 1,
-         reward: [{ itemId: 'GE', quantity: 25, customData: null }],
+         reward: [{ itemId: 'NormalShard', quantity: 5, customData: null }],
          points: 2,
       },
       {
-         id: 101,
+         id: 4,
          typeQuest: 'weekly',
          questActionId: 'PLAY_GAME',
-         desc: 'Play 10 battles',
-         required: 10,
-         reward: [{ itemId: 'GE', quantity: 100, customData: null }],
+         desc: 'Play 20 battles',
+         required: 20,
+         reward: [{ itemId: 'GE', quantity: 150, customData: null }],
          points: 4,
       },
       {
-         id: 102,
+         id: 5,
+         typeQuest: 'weekly',
+         questActionId: 'WIN_BATTLE',
+         desc: 'Win 10 battles',
+         required: 10,
+         reward: [{ itemId: 'GO', quantity: 800, customData: null }],
+         points: 4,
+      },
+      {
+         id: 6,
          typeQuest: 'weekly',
          questActionId: 'UPGRADE_UNIT',
-         desc: 'Upgrade 3 heroes',
-         required: 3,
-         reward: [{ itemId: 'NormalShard', quantity: 5, customData: null }],
+         desc: 'Upgrade 5 heroes',
+         required: 5,
+         reward: [{ itemId: 'EliteShard', quantity: 10, customData: null }],
          points: 4,
       },
       {
-         id: 201,
+         id: 7,
+         typeQuest: 'achievement',
+         questActionId: 'PLAY_GAME',
+         desc: 'Play 50 battles',
+         required: 50,
+         reward: [{ itemId: 'GE', quantity: 300, customData: null }],
+      },
+      {
+         id: 8,
          typeQuest: 'achievement',
          questActionId: 'WIN_BATTLE',
-         desc: 'Win 3 battles',
-         required: 3,
-         reward: [{ itemId: 'SpecialShard', quantity: 1, customData: null }],
+         desc: 'Win 25 battles',
+         required: 25,
+         reward: [{ itemId: 'GO', quantity: 1500, customData: null }],
+      },
+      {
+         id: 9,
+         typeQuest: 'achievement',
+         questActionId: 'UPGRADE_UNIT',
+         desc: 'Upgrade 20 heroes',
+         required: 20,
+         reward: [{ itemId: 'SpecialShard', quantity: 10, customData: null }],
       },
       {
          kind: 'progressReward',
@@ -220,52 +284,43 @@ export const DEFAULT_CONFIGS = {
          reward: [{ itemId: 'SpecialShard', quantity: 1, customData: null }],
       },
    ] satisfies Array<QuestDefinitionRecord | ProgressRewardDefinitionRecord>,
+   campaign: DEFAULT_CAMPAIGN_REWARDS,
    rank: [
       {
-         mode: 'PVP',
-         result: 'WIN',
-         rewards: [
-            { itemId: 'GO', quantity: 100, customData: null },
-            { itemId: 'XP', quantity: 20, customData: null },
-            { itemId: 'Trophy', quantity: 3, customData: null },
-            { itemId: 'NormalShard', quantity: 1, customData: null },
-         ],
+         name: 'Rookie',
+         MinTrophy: 0,
+         MaxTrophy: 99,
+         WinGolds: 30,
+         WinXP: 50,
+         WinTrophy: 35,
+         WinNormalShard: 4,
+         WinEliteShard: 1,
+         WinSpecialShard: 0,
+         LoseGolds: 10,
+         LoseXP: 15,
+         LoseTrophy: -10,
+         LoseNormalShard: 2,
+         LoseEliteShard: 0,
+         LoseSpecialShard: 0,
       },
       {
-         mode: 'PVP',
-         result: 'LOSE',
-         rewards: [
-            { itemId: 'GO', quantity: 40, customData: null },
-            { itemId: 'XP', quantity: 10, customData: null },
-            { itemId: 'Trophy', quantity: -1, customData: null },
-         ],
+         name: 'Fallback',
+         MinTrophy: 100,
+         MaxTrophy: 999999,
+         WinGolds: 30,
+         WinXP: 50,
+         WinTrophy: 35,
+         WinNormalShard: 4,
+         WinEliteShard: 1,
+         WinSpecialShard: 0,
+         LoseGolds: 10,
+         LoseXP: 15,
+         LoseTrophy: -10,
+         LoseNormalShard: 2,
+         LoseEliteShard: 0,
+         LoseSpecialShard: 0,
       },
-      {
-         mode: 'PVP',
-         result: 'DRAW',
-         rewards: [
-            { itemId: 'GO', quantity: 50, customData: null },
-            { itemId: 'XP', quantity: 12, customData: null },
-         ],
-      },
-      {
-         mode: 'PVE',
-         result: 'WIN',
-         rewards: [
-            { itemId: 'GO', quantity: 80, customData: null },
-            { itemId: 'XP', quantity: 15, customData: null },
-            { itemId: 'NormalShard', quantity: 1, customData: null },
-         ],
-      },
-      {
-         mode: 'PVE',
-         result: 'LOSE',
-         rewards: [
-            { itemId: 'GO', quantity: 30, customData: null },
-            { itemId: 'XP', quantity: 5, customData: null },
-         ],
-      },
-   ] satisfies RankRewardRuleRecord[],
+   ] satisfies RankRewardBracketRecord[],
    upgrade: [
       { kind: 'heroUpgrade', itemId: 'Soldier', level: 1, goldCost: 50, shardCost: 2 },
       { kind: 'heroUpgrade', itemId: 'Soldier', level: 2, goldCost: 160, shardCost: 1 },
@@ -296,10 +351,11 @@ export const DEFAULT_CONFIGS = {
    >,
    accountLevel: [
       { level: 1, requiredExp: 0, rewards: [] },
-      { level: 2, requiredExp: 100, rewards: [{ itemId: 'GO', quantity: 100, customData: null }] },
-      { level: 3, requiredExp: 250, rewards: [{ itemId: 'GE', quantity: 50, customData: null }] },
-      { level: 4, requiredExp: 450, rewards: [{ itemId: 'NormalShard', quantity: 3, customData: null }] },
+      { level: 2, requiredExp: 50, rewards: [{ itemId: 'GO', quantity: 100, customData: null }] },
+      { level: 3, requiredExp: 150, rewards: [{ itemId: 'GE', quantity: 50, customData: null }] },
+      { level: 4, requiredExp: 350, rewards: [{ itemId: 'NormalShard', quantity: 3, customData: null }] },
    ] satisfies AccountLevelRecord[],
+   lobby: DEFAULT_LOBBY_RULES satisfies LobbyConfigRecord[],
    spriteResource: [
       { id: 'normal', type: 'avatar', label: 'Normal' },
       { id: 'avatar_01', type: 'avatar', label: 'Avatar 01' },
