@@ -3,12 +3,13 @@ export function extractBearerToken(authorizationHeader?: string): string | undef
       return undefined;
    }
 
-   const [scheme, value] = authorizationHeader.split(' ');
+   const [scheme, ...rest] = authorizationHeader.trim().split(/\s+/);
+   const value = rest.join(' ');
    if (!scheme || !value || scheme.toLowerCase() !== 'bearer') {
       return undefined;
    }
 
-   return value.trim() || undefined;
+   return value.trim();
 }
 
 export function extractRequestToken(headers: Record<string, unknown>): string | undefined {
