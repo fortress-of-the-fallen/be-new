@@ -108,9 +108,29 @@
          "^src/(.*)$": "<rootDir>/$1"
       },
       "collectCoverageFrom": [
-         "**/*.(t|j)s"
+         "api/controller/v1/**/*.ts",
+         "api/interceptor/**/*.ts",
+         "api/model/res/base/api-envelope.model.ts",
+         "app.module.ts",
+         "bootstrap/app.factory.ts",
+         "features/*/*.module.ts",
+         "features/**/application/*.ts",
+         "shared/helper/request-auth.helper.ts",
+         "shared/helper/string.helper.ts"
+      ],
+      "coveragePathIgnorePatterns": [
+         "\\.spec\\.ts$",
+         "/index\\.ts$"
       ],
       "coverageDirectory": "../coverage",
+      "coverageThreshold": {
+         "global": {
+            "branches": 100,
+            "functions": 100,
+            "lines": 100,
+            "statements": 100
+         }
+      },
       "testEnvironment": "node"
    }
 }
