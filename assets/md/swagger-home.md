@@ -5,7 +5,7 @@ Trang này là cổng điều hướng cho contract `/api/v1` hiện tại.
 ## Base Contract
 
 - Base URL: `/api/v1`
-- Protected routes: `Authorization: Bearer <accessToken>`
+- Protected routes: `Authorization: Bearer ***`
 - Public routes: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `GET /api/v1/configs/*`
 - Success envelope chuẩn mới: `{ success, data, serverTime }`
 - Character hiện vẫn giữ compatibility success envelope: `{ success, errorCode, error, timestamp, result? }`
@@ -37,6 +37,7 @@ Trang này là cổng điều hướng cho contract `/api/v1` hiện tại.
 - Leaderboard: [/docs/leaderboard](/docs/leaderboard)
 - Lobby: [/docs/lobby](/docs/lobby)
 - Config: [/docs/config](/docs/config)
+- Operations / Deploy / Recovery: [/docs/operations](/docs/operations)
 
 ## Shared References
 
@@ -82,6 +83,7 @@ Relevant public docs URLs:
 - Feature docs battle: /docs/battle
 - Feature docs leaderboard: /docs/leaderboard
 - Feature docs config: /docs/config
+- Feature docs operations: /docs/operations
 
 1. GLOBAL CONTRACT RULES
 
@@ -89,7 +91,7 @@ Relevant public docs URLs:
 - All primary game APIs live under /api/v1
 
 1.2 Authentication
-- Protected endpoints require header: Authorization: Bearer <accessToken>
+- Protected endpoints require header: Authorization: Bearer ***
 - Public endpoints:
   - POST /api/v1/auth/register
   - POST /api/v1/auth/login

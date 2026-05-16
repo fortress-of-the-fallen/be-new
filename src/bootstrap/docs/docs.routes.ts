@@ -60,6 +60,11 @@ export function registerDocsRoutes(app: INestApplication): void {
          title: 'Shop Docs',
          markdownPath: join(process.cwd(), 'src/features/shop/application/docs.md'),
       },
+      {
+         route: '/docs/operations',
+         title: 'Operations Docs',
+         markdownPath: join(process.cwd(), 'src/features/operations/application/docs.md'),
+      },
    ] as const;
 
    expressApp.get('/', async (_req: any, res: any) => {
