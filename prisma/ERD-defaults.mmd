@@ -1,0 +1,195 @@
+erDiagram
+  "accounts" {
+    String id PK "default: auto()"
+    String username
+    String password
+    String playerId
+    String status  "default: 'active'"
+    String role
+    Int maxSession  "default: 5"
+    Int max_game_user  "default: 3"
+    DateTime createdAt  "default: now()"
+    DateTime updatedAt
+    DateTime lastLoginAt
+  }
+  "refresh_tokens" {
+    String id PK "default: auto()"
+    String user FK
+    String playerId
+    String tokenHash
+    DateTime expiresAt
+    DateTime revokedAt
+    DateTime createdAt  "default: now()"
+    String userAgent
+    String ipAddress
+  }
+  "players" {
+    String id PK
+    String accountId
+    Json profile
+    Json statistics
+    Json tutorialProgress
+    Json currency
+    String configVersion
+    DateTime createdAt  "default: now()"
+    DateTime updatedAt
+  }
+  "player_inventory_items" {
+    String id PK
+    String playerId FK
+    String itemId
+    String itemType
+    String itemClass
+    Int remainingUses  "default: 0"
+    Json customData
+    DateTime createdAt  "default: now()"
+    DateTime updatedAt
+  }
+  "player_formations" {
+    String id PK "default: auto()"
+    String playerId FK
+    String name
+    Json slots
+    DateTime createdAt  "default: now()"
+    DateTime updatedAt
+  }
+  "player_quests" {
+    String id PK "default: auto()"
+    String playerId FK
+    Int questId
+    String type
+    String actionId
+    Int progress
+    Int required
+    Boolean claimed  "default: false"
+    String periodKey
+    DateTime createdAt  "default: now()"
+    DateTime updatedAt
+  }
+  "player_quest_progress_rewards" {
+    String id PK "default: auto()"
+    String playerId FK
+    String track
+    Int stage
+    Int points
+    String periodKey
+    Json reward
+    Boolean claimed  "default: false"
+    DateTime createdAt  "default: now()"
+    DateTime updatedAt
+  }
+  "battle_sessions" {
+    String id PK
+    String playerId FK
+    String opponentPlayerId
+    String mode
+    Int seed
+    String status
+    DateTime startedAt
+    DateTime expiresAt
+    DateTime finishedAt
+    String result
+    Json summary
+    Json rewards
+    String configVersion
+  }
+  "reward_transactions" {
+    String id PK "default: auto()"
+    String playerId FK
+    String sourceType
+    String sourceId
+    String idempotencyKey
+    Json changes
+    Json balanceAfter
+    DateTime createdAt  "default: now()"
+  }
+  "leaderboard_scores" {
+    String id PK "default: auto()"
+    String playerId FK
+    String type
+    Int score
+    String displayName
+    String avatar
+    String country
+    DateTime updatedAt
+  }
+  "configs" {
+    String id PK "default: auto()"
+    String name
+    String version
+    Boolean isActive  "default: false"
+    Json records
+    DateTime createdAt  "default: now()"
+    DateTime activatedAt
+  }
+  "idempotency_records" {
+    String id PK "default: auto()"
+    String playerId FK
+    String idempotencyKey
+    String action
+    String requestHash
+    Json response
+    DateTime createdAt  "default: now()"
+  }
+  "characters" {
+    String id PK
+    String character_name
+    String race
+    String gender
+    String userId FK
+    Boolean isDeleted  "default: false"
+    Boolean isLocked  "default: false"
+  }
+  "character_appearances" {
+    String id PK "default: uuid()"
+    String characterId FK
+    String hair
+    String beard
+    String eye
+    String hairColor
+    String beardColor
+    String eyeColor
+  }
+  "character_stats" {
+    String id PK "default: uuid()"
+    String characterId FK
+    Int str
+    Int dex
+    Int con
+    Int int
+    Int wis
+    Int cha
+    Int unspentPoints  "default: 0"
+    Int hp
+    Int mp
+    Int patk
+    Int datk
+    Int matk
+    Int mdef
+    Int spd
+    Int crit
+    Int acc
+    Int eva
+    Int formulaVersion  "default: 1"
+    DateTime updatedAt
+  }
+  "backups" {
+    String id PK "default: uuid()"
+    String backUpType
+    String filePath
+    DateTime createAt  "default: now()"
+    Boolean isDeleted  "default: false"
+    Boolean isLocked  "default: false"
+  }
+  "accounts" ||--o{ "refresh_tokens" : "account"
+  "players" ||--o{ "player_inventory_items" : "player"
+  "players" ||--o{ "player_formations" : "player"
+  "players" ||--o{ "player_quests" : "player"
+  "players" ||--o{ "player_quest_progress_rewards" : "player"
+  "players" ||--o{ "battle_sessions" : "player"
+  "players" ||--o{ "reward_transactions" : "player"
+  "players" ||--o{ "leaderboard_scores" : "player"
+  "players" ||--o{ "idempotency_records" : "player"
+  "accounts" ||--o{ "characters" : "user"
+  "characters" ||--o| "character_appearances" : "character"
+  "characters" ||--o| "character_stats" : "character"

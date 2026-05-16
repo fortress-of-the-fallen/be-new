@@ -1,0 +1,20 @@
+{
+   "editor.formatOnSave": true,
+   "editor.defaultFormatter": "esbenp.prettier-vscode",
+   "files.eol": "\n",
+   "prettier.endOfLine": "lf",
+   "explorer.compactFolders": false,
+   "workbench.editor.restoreViewState": true,
+   "editor.folding": false,
+   "files.restoreUndoStack": false,
+   "workbench.startupEditor": "none",
+   "explorer.autoReveal": true,
+
+   "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true
+   }
+}

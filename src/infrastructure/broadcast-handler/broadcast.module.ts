@@ -1,0 +1,24 @@
+import { Module } from '@nestjs/common';
+import { AppGateway } from './websocket-gateway';
+import path from 'path';
+import * as fs from 'fs';
+import { hubs } from 'src/shared/decorator/hub.decorator';
+import { BroadcastHandler } from './broadcast-handler';
+
+const hubDir = path.resolve(__dirname, './hub');
+
+fs.readdirSync(hubDir)
+   .filter(file => file.endsWith('.js'))
+   .forEach(file => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require(path.join(hubDir, file));
+   });
+
+const registeredHubs = hubs;
+
+@Module({
+   providers: [AppGateway, ...registeredHubs, BroadcastHandler],
+
+   exports: [BroadcastHandler],
+})
+export class BroadcastModule {}
