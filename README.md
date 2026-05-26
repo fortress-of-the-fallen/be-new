@@ -85,3 +85,4 @@ docker compose -f docker-compose.prod.yml down
 - Player docs: `src/features/player/application/docs.md`
 - Operations docs: `src/features/operations/application/docs.md`
 - GDD / domain docs: `game-design-docs/`
+- Test coverage baseline (issue #4): [`docs/test-coverage-baseline.md`](docs/test-coverage-baseline.md)
